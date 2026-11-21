@@ -1,0 +1,33 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PHP OOP and Architecture</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">PHP</span><span>PHP <strong>OOP</strong></span></a><span class="top-note">Modern PHP architecture</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">PHP ROADMAP</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">PHP Overview</a><a class="nav-link" href="roadmap.html">Roadmap</a><a class="nav-link" href="fundamentals.html">01 · Fundamentals</a><a class="nav-link active" href="oop.html">02 · OOP</a><a class="nav-link" href="database.html">03 · Database</a><a class="nav-link" href="web-api.html">04 · Web & APIs</a><a class="nav-link" href="security-testing.html">05 · Security & Testing</a></aside><article class="content"><p class="eyebrow">PHP · MODULE 02</p><h1>OOP, Composer and architecture</h1><p class="lead">Move from procedural scripts to organized application code without adding unnecessary complexity.</p><h2>Classes and encapsulation</h2><pre><code>final class Patient
+{
+    public function __construct(
+        public readonly int $id,
+        private string $name,
+        private bool $active = true,
+    ) {
+        if ($id <= 0 || trim($name) === '') {
+            throw new InvalidArgumentException('Invalid patient');
+        }
+    }
+
+    public function name(): string { return $this->name; }
+    public function deactivate(): void { $this->active = false; }
+    public function isActive(): bool { return $this->active; }
+}</code></pre><p>The object protects its invariants. Callers cannot directly reactivate a patient by changing a public field; they must use a defined operation.</p><h2>Interfaces and dependency inversion</h2><pre><code>interface AppointmentNotifier
+{
+    public function sendConfirmation(int $appointmentId): void;
+}
+
+final class AppointmentService
+{
+    public function __construct(private AppointmentNotifier $notifier) {}
+
+    public function confirm(int $appointmentId): void
+    {
+        // Apply booking rules and persist status here.
+        $this->notifier->sendConfirmation($appointmentId);
+    }
+}</code></pre><p>The service depends on a capability, not a specific SMS vendor. A test fake can implement the same interface.</p><h2>Namespaces and Composer</h2><p>Namespaces organize classes and avoid name collisions. Composer manages dependencies and PSR-4 autoloading. Commit composer.json and composer.lock; do not commit vendor dependencies unless a deployment policy explicitly requires it.</p><pre><code>{
+  "autoload": { "psr-4": { "Hospital\\": "src/" } },
+  "require": { "php": "^8.2" }
+}</code></pre><p>Run composer dump-autoload after changing autoload configuration. Use dependency constraints intentionally and review updates for security and compatibility.</p><h2>Architecture boundaries</h2><ul><li>Controller: HTTP input/output coordination.</li><li>Application service: use-case orchestration, such as booking an appointment.</li><li>Domain: rules and concepts such as appointment eligibility.</li><li>Infrastructure: PDO, email, SMS and external integrations.</li></ul><p>Do not let a domain rule depend on $_POST, a framework request object or a SQL connection. Frameworks such as Laravel and CodeIgniter provide conventions, but the separation of responsibilities still matters.</p><h2>Practice task</h2><ol><li>Create Patient, Doctor and Appointment classes.</li><li>Use composition for Appointment-to-Patient and Appointment-to-Doctor relationships.</li><li>Define AppointmentNotifier and provide email/SMS implementations.</li><li>Autoload classes with Composer PSR-4.</li><li>Unit-test booking rules without a web server or database.</li></ol></section><nav class="page-nav"><a href="fundamentals.html">← Fundamentals</a><a href="database.html">Next: Database →</a></nav><footer>PHP track · OOP and architecture</footer></article></main></body></html>
