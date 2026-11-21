@@ -1,0 +1,33 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASP.NET Core web fundamentals | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">API</span><span>ASP.NET Core <strong>Backend Reference</strong></span></a><span class="top-note">ASP.NET Core · Hospital HMS</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">ASP.NET CORE</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="../csharp.html">C# Language</a><a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="roadmap.html">Complete roadmap</a><a class="nav-link " href="guide-prerequisites.html">Prerequisites</a><a class="nav-link active" href="guide-web.html">Web fundamentals</a><a class="nav-link " href="guide-data.html">Data and ORM</a><a class="nav-link " href="guide-platform.html">DI, logging, cloud</a><a class="nav-link " href="guide-communication.html">API and real-time</a><a class="nav-link " href="guide-workers.html">Background and messaging</a><a class="nav-link " href="guide-testing.html">Testing and CI/CD</a><a class="nav-link " href="guide-architecture.html">Architecture and ecosystem</a><a class="nav-link" href="../sql/index.html">SQL & Databases</a><a class="nav-link" href="../engineering/cicd.html">CI/CD & Cloud</a></aside><article class="content"><p class="eyebrow">DETAILED REFERENCE GUIDE</p><h1>ASP.NET Core web fundamentals</h1><p class="lead">Concept, purpose, code examples and production considerations with hospital application scenarios.</p><section><h2>Minimal APIs and route groups</h2><p>Minimal APIs map HTTP routes directly and support DI, filters, validation and OpenAPI. Group endpoints by resource and shared policies.</p><pre><code>var patients = app.MapGroup("/api/patients").WithTags("Patients");
+patients.MapGet("/{id:int}", async (int id, IPatientService service, CancellationToken ct) =&gt;
+    await service.FindAsync(id, ct) is { } p ? Results.Ok(p) : Results.NotFound());</code></pre></section>,<section><h2>MVC controllers</h2><p>Controllers organize API actions and can use model binding, filters, validation and authorization attributes. Expose DTOs rather than EF entities.</p><pre><code>[ApiController]
+[Route("api/[controller]")]
+public sealed class PatientsController(IPatientService service) : ControllerBase
+{
+ [HttpGet("{id:int}")]
+ public async Task&lt;ActionResult&lt;PatientDto&gt;&gt; Get(int id, CancellationToken ct)
+  =&gt; await service.FindAsync(id, ct) is { } p ? Ok(p) : NotFound();
+}</code></pre></section>,<section><h2>REST API design</h2><p>Use resource-based URLs, HTTP methods and appropriate status codes. POST creates, GET reads, PUT replaces, PATCH partially updates and DELETE removes/deactivates.</p><pre><code>[HttpPost]
+public async Task&lt;IActionResult&gt; Create(CreatePatientRequest request, CancellationToken ct)
+{
+ var id = await service.RegisterAsync(request, ct);
+ return CreatedAtAction(nameof(Get), new { id }, new { id });
+}</code></pre></section>,<section><h2>Razor Pages</h2><p>Razor Pages organize server-rendered pages around a .cshtml page and PageModel. They fit form-centric administrative applications.</p><pre><code>@page
+@model PatientModel
+&lt;h1&gt;@Model.PatientName&lt;/h1&gt;
+&lt;form method="post"&gt;&lt;button type="submit"&gt;Confirm registration&lt;/button&gt;&lt;/form&gt;</code></pre></section>,<section><h2>Razor Components</h2><p>Razor Components are reusable UI components written with Razor and C#. They can be used in server-rendered and interactive web experiences.</p><pre><code>@* PatientBadge.razor *@
+&lt;span class="badge"&gt;@Name&lt;/span&gt;
+@code { [Parameter] public string Name { get; set; } = string.Empty; }</code></pre></section>,<section><h2>Middleware pipeline</h2><p>Middleware runs in registration order for each request and can inspect, modify, short-circuit or call the next component. Ordering is essential.</p><pre><code>app.UseExceptionHandler();
+app.UseHttpsRedirection();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();</code></pre></section>,<section><h2>Filters and attributes</h2><p>MVC filters run around resource, action, exception and result stages. Attributes declare routing, authorization and validation metadata. Middleware applies more broadly.</p><pre><code>[Authorize(Policy = "Billing.Read")]
+[HttpGet("{id:int}")]
+public Task&lt;IActionResult&gt; GetInvoice(int id) =&gt; ...;</code></pre></section>,<section><h2>App settings and configuration</h2><p>Configuration merges JSON, environment variables, user secrets, command-line arguments and secret stores. Use strongly typed options for related settings.</p><pre><code>builder.Services.Configure&lt;LabApiOptions&gt;(builder.Configuration.GetSection("LabApi"));
+public sealed class LabApiOptions { public string BaseUrl { get; set; } = ""; }</code></pre></section>,<section><h2>Problem Details and global errors</h2><p>Translate unhandled exceptions into consistent safe Problem Details responses. Do not expose stack traces, SQL messages or secrets to clients.</p><pre><code>builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler&lt;GlobalExceptionHandler&gt;();
+app.UseExceptionHandler();</code></pre></section>,<section><h2>Authentication and authorization</h2><p>Authentication establishes identity; authorization checks permission. Use policies/claims and resource-level checks for sensitive patient records.</p><pre><code>builder.Services.AddAuthorization(o =&gt;
+ o.AddPolicy("Patient.Read", p =&gt; p.RequireClaim("permission", "patient.read")));
+app.UseAuthentication();
+app.UseAuthorization();</code></pre></section><footer>Programming Academy · ASP.NET Core reference</footer></article></main></body></html>
