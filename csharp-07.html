@@ -15,4 +15,150 @@ var urgentAppointments = appointments.Where(isUrgent);</code></pre><h3>Events no
     public void Confirm(int id) => Confirmed?.Invoke(this, id);
 }</code></pre><p>In-process events are not durable messaging. For reliable cross-service communication, use a broker and an outbox pattern.</p><h3>Async/await for I/O</h3><p>SQL Server, payment and SMS calls wait on external I/O. Async APIs free request threads while waiting; async does not automatically speed up CPU-heavy calculations.</p><pre><code>public async Task&lt;Patient?&gt; FindAsync(int id, CancellationToken ct)
     => await _db.Patients.FirstOrDefaultAsync(p => p.Id == id, ct);</code></pre><p>Propagate CancellationToken from the request to database and HTTP operations. Avoid .Result and .Wait() in request paths. They block threads and hurt scalability.</p><h3>Concurrency and Task.WhenAll</h3><p>Independent I/O such as loading clinic details and doctor availability may run concurrently. Limit fan-out and respect provider/database capacity. EF Core DbContext is not thread-safe: do not run concurrent operations on the same instance.</p><h3>Practice task</h3><ol><li>Pass a Func&lt;Appointment,bool&gt; to filter emergencies.</li><li>Raise an event when an appointment is confirmed.</li><li>Implement an async EF Core repository method.</li><li>Propagate CancellationToken through every layer.</li><li>Compare sequential calls with Task.WhenAll for independent I/O.</li></ol></section>
-<nav class="page-nav"><a href="csharp-06.html">← Previous: 06 · Modern C#</a><a href="dotnet.html">Next: 08 · .NET Internals →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<nav class="page-nav"><a href="csharp-06.html">← Previous: 06 · Modern C#</a><a href="dotnet.html">Next: 08 · .NET Internals →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer><section><h2>Worked examples: delegates, events and asynchronous code</h2>
+<h3>Delegate: a variable that refers to a method</h3>
+<pre><code>public delegate decimal DiscountCalculator(decimal amount);
+
+static decimal StaffDiscount(decimal amount) => amount * 0.20m;
+static decimal SeniorDiscount(decimal amount) => amount * 0.10m;
+
+DiscountCalculator policy = StaffDiscount;
+decimal discounted = policy(1000m); // 200
+
+policy = SeniorDiscount;
+decimal seniorDiscount = policy(1000m); // 100</code></pre>
+<p>Delegates enable callbacks and behavior to be passed as data. Events are built on delegate types but restrict who can raise the notification.</p>
+<h3>Action, Func and Predicate</h3>
+<pre><code>Action&lt;string&gt; audit = message => Console.WriteLine(message);
+Func&lt;decimal, decimal, decimal&gt; add = (a, b) => a + b;
+Predicate&lt;Patient&gt; isAdult = patient => patient.Age >= 18;
+
+audit("Patient registered");
+decimal total = add(100m, 250m);
+bool adult = isAdult(patient);</code></pre>
+<p><code>Action</code> returns void, <code>Func</code> returns a value, and <code>Predicate&lt;T&gt;</code> returns bool. They are standard generic delegate types used throughout LINQ and .NET APIs.</p>
+<h3>Lambda expressions</h3>
+<pre><code>var adults = patients.Where(p => p.Age >= 18);
+var names = adults.Select(p => p.Name);
+
+Func&lt;Patient, bool&gt; hasBalance = p => p.Balance > 0;
+var debtors = patients.Where(hasBalance).ToList();</code></pre>
+<h3>Multicast delegates</h3>
+<pre><code>Action invoiceFinalized = () => Console.WriteLine("Write audit record");
+invoiceFinalized += () => Console.WriteLine("Queue receipt email");
+invoiceFinalized += () => Console.WriteLine("Refresh dashboard");
+
+invoiceFinalized(); // invokes each registered method in order</code></pre>
+<p>Multicast delegates invoke handlers synchronously in invocation-list order. If one handler throws, later handlers may not run. For robust independent event processing, isolate failures or use a message queue.</p>
+<h3>Events: publisher and subscribers</h3>
+<pre><code>public sealed class Appointment
+{
+    public event EventHandler? Confirmed;
+
+    public void Confirm()
+    {
+        // Validate and persist confirmation first.
+        Confirmed?.Invoke(this, EventArgs.Empty);
+    }
+}
+
+var appointment = new Appointment();
+appointment.Confirmed += (_, _) => Console.WriteLine("Send confirmation");
+appointment.Confirmed += (_, _) => Console.WriteLine("Write audit event");
+appointment.Confirm();</code></pre>
+<p>Only the declaring type can raise its event. Subscribers can add or remove handlers. Unsubscribe long-lived subscriptions when the subscriber lifetime ends to avoid memory leaks.</p>
+<h3>Custom event arguments</h3>
+<pre><code>public sealed class AppointmentConfirmedEventArgs(
+    int appointmentId,
+    int patientId) : EventArgs
+{
+    public int AppointmentId { get; } = appointmentId;
+    public int PatientId { get; } = patientId;
+}
+
+public sealed class AppointmentWorkflow
+{
+    public event EventHandler&lt;AppointmentConfirmedEventArgs&gt;? Confirmed;
+
+    public void Complete(int appointmentId, int patientId)
+        => Confirmed?.Invoke(this,
+            new AppointmentConfirmedEventArgs(appointmentId, patientId));
+}</code></pre>
+<h3>Async and await for I/O-bound work</h3>
+<pre><code>static async Task&lt;Patient?&gt; FindPatientAsync(
+    int id,
+    IPatientRepository repository,
+    CancellationToken cancellationToken)
+{
+    Patient? patient = await repository.FindAsync(id, cancellationToken);
+    return patient;
+}
+
+Patient? result = await FindPatientAsync(id, repository, cancellationToken);</code></pre>
+<p><code>async</code>/<code>await</code> makes asynchronous control flow readable. It does not automatically create a new thread. For database, file and network I/O, await the asynchronous API rather than wrapping synchronous I/O in <code>Task.Run</code>.</p>
+<h3>Await multiple independent operations</h3>
+<pre><code>Task&lt;Patient?&gt; patientTask = patientRepository.FindAsync(patientId, ct);
+Task&lt;IReadOnlyList&lt;Appointment&gt;&gt; appointmentsTask =
+    appointmentRepository.GetUpcomingAsync(patientId, ct);
+
+await Task.WhenAll(patientTask, appointmentsTask);
+
+Patient? patient = await patientTask;
+IReadOnlyList&lt;Appointment&gt; appointments = await appointmentsTask;</code></pre>
+<p>Run tasks concurrently only when they are independent and the underlying services support concurrent operations. Do not run multiple EF Core operations simultaneously on the same DbContext instance.</p>
+<h3>Cancellation tokens</h3>
+<pre><code>public async Task&lt;IReadOnlyList&lt;Patient&gt;&gt; SearchAsync(
+    string term,
+    CancellationToken cancellationToken)
+{
+    return await db.Patients
+        .Where(p => p.FullName.Contains(term))
+        .ToListAsync(cancellationToken);
+}</code></pre>
+<p>Pass cancellation tokens through the entire call chain. Cancellation is cooperative; code must observe the token and use APIs that accept it.</p>
+<h3>Handle asynchronous exceptions</h3>
+<pre><code>try
+{
+    await appointmentService.BookAsync(command, ct);
+}
+catch (AppointmentConflictException ex)
+{
+    logger.LogWarning(ex, "Appointment conflict for patient {PatientId}",
+        command.PatientId);
+    throw;
+}
+catch (OperationCanceledException) when (ct.IsCancellationRequested)
+{
+    logger.LogDebug("Appointment booking was cancelled");
+    throw;
+}</code></pre>
+<h3>Task.WhenAll and partial failures</h3>
+<pre><code>Task emailTask = emailSender.SendAsync(message, ct);
+Task auditTask = auditWriter.WriteAsync(entry, ct);
+
+try
+{
+    await Task.WhenAll(emailTask, auditTask);
+}
+catch
+{
+    // Inspect/log the failure and apply the workflow's retry policy.
+    throw;
+}</code></pre>
+<p>For business-critical multi-step workflows, do not assume concurrent tasks form one atomic transaction. Use durable workflow state, idempotency and an outbox/message broker where appropriate.</p>
+<h3>ValueTask and Task</h3>
+<pre><code>public ValueTask&lt;string&gt; GetHospitalCodeAsync(bool alreadyCached)
+{
+    if (alreadyCached)
+        return ValueTask.FromResult("GH-01");
+
+    return new ValueTask&lt;string&gt;(LoadFromRemoteAsync());
+}
+
+private static async Task&lt;string&gt; LoadFromRemoteAsync()
+{
+    await Task.Delay(10);
+    return "GH-01";
+}</code></pre>
+<p>Use <code>Task</code> by default. <code>ValueTask</code> is a specialized optimization for measured high-frequency APIs that often complete synchronously; it has usage constraints and should not be adopted automatically.</p>
+</section></article></main></body></html>
