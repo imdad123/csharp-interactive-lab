@@ -22,4 +22,26 @@ BEGIN CATCH
     THROW;
 END CATCH;</code></pre></section>
 <section><h2>Isolation, locking and concurrency</h2><p>Understand Read Uncommitted, Read Committed, Repeatable Read, Serializable, Snapshot and RCSI. Learn dirty reads, non-repeatable reads, phantom reads, blocking, deadlocks, deadlock graphs and rowversion-based optimistic concurrency. NOLOCK is not a universal performance fix.</p></section>
-<section><h2>HospitalApp practice</h2><ul><li>Book appointments safely under concurrent requests.</li><li>Post invoice and payment/ledger records in one transaction.</li><li>Prevent duplicate payment posting with unique business keys.</li><li>Allocate a bed atomically so two users cannot claim the same bed.</li></ul></section><nav class="page-nav"><a href="tsql-02.html">← Previous: 13 · T-SQL Querying</a><a href="tsql-04.html">Next: 15 · SQL Performance →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<section><h2>HospitalApp practice</h2><ul><li>Book appointments safely under concurrent requests.</li><li>Post invoice and payment/ledger records in one transaction.</li><li>Prevent duplicate payment posting with unique business keys.</li><li>Allocate a bed atomically so two users cannot claim the same bed.</li></ul></section><section><h2>Deep dive: safe T-SQL programming and financial transactions</h2><h3>Stored procedures</h3><p>Procedures provide a named database interface and can centralize operations and permissions. They do not automatically make SQL fast or secure; parameterize inputs.</p><pre><code>CREATE OR ALTER PROCEDURE dbo.GetPatientAppointments
+ @PatientId int, @FromDate date, @ToDate date
+AS
+BEGIN
+ SET NOCOUNT ON;
+ SELECT AppointmentId, ScheduledAt, Status FROM dbo.Appointments
+ WHERE PatientId=@PatientId AND ScheduledAt >= @FromDate
+ AND ScheduledAt < DATEADD(day,1,@ToDate)
+ ORDER BY ScheduledAt DESC;
+END;</code></pre><h3>Transactions: invoice header and lines</h3><p>Invoice header, details and accounting entries must commit together or roll back together.</p><pre><code>SET XACT_ABORT ON;
+BEGIN TRY
+ BEGIN TRANSACTION;
+ INSERT dbo.Invoices(PatientId, InvoiceDate, TotalAmount)
+ VALUES (@PatientId, SYSUTCDATETIME(), @TotalAmount);
+ DECLARE @InvoiceId bigint=SCOPE_IDENTITY();
+ INSERT dbo.InvoiceLines(InvoiceId, Description, Amount)
+ VALUES (@InvoiceId, N'Consultation', @ConsultationFee);
+ COMMIT;
+END TRY
+BEGIN CATCH
+ IF XACT_STATE() <> 0 ROLLBACK;
+ THROW;
+END CATCH;</code></pre><p>Validate header total against line totals and apply correct currency rounding before posting.</p><h3>Isolation, locks and deadlocks</h3><p>Understand READ COMMITTED, SNAPSHOT and SERIALIZABLE. Keep transactions short, access tables in consistent order and index predicates to reduce lock duration. Retry deadlock victims only when the operation is safe to retry.</p><h3>Views, functions, temp tables and dynamic SQL</h3><p>Views package query logic; functions return scalar or table values with trade-offs; temp tables hold intermediate results. For dynamic SQL, use sp_executesql parameters for values. Object names cannot be parameters: whitelist them and use QUOTENAME.</p><h3>Practice task</h3><ol><li>Create patient appointment history procedure.</li><li>Write invoice posting with rollback.</li><li>Simulate two users updating one invoice and inspect blocking.</li><li>Capture a deadlock graph.</li><li>Build a safe dynamic report.</li></ol></section><nav class="page-nav"><a href="tsql-02.html">← Previous: 13 · T-SQL Querying</a><a href="tsql-04.html">Next: 15 · SQL Performance →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
