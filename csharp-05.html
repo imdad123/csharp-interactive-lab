@@ -30,4 +30,159 @@ string loaded = await File.ReadAllTextAsync("patient-export.json");
 PatientExport? restored = JsonSerializer.Deserialize&lt;PatientExport&gt;(loaded);</code></pre><p>Do not export sensitive patient data to uncontrolled folders. Apply access control, encryption and retention policies.</p><h3>Dispose external resources</h3><p>Files, streams and database connections hold external resources. using/await using guarantees disposal even when an exception occurs.</p><pre><code>await using var stream = new FileStream("report.txt", FileMode.Create);
 await using var writer = new StreamWriter(stream);
 await writer.WriteLineAsync("Daily appointment report");</code></pre><p>Never keep a database connection open while waiting for a user to type. Dispose ADO.NET connections and commands deterministically.</p><h3>Practice task</h3><ol><li>Validate patient data with clear messages.</li><li>Throw for impossible internal states.</li><li>Export a sample patient list to JSON.</li><li>Handle missing-file and permission failures at the UI boundary.</li><li>Ensure streams and database objects are disposed.</li></ol></section>
-<nav class="page-nav"><a href="csharp-04.html">← Previous: 04 · Generics & Design</a><a href="csharp-06.html">Next: 06 · Modern C# →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<nav class="page-nav"><a href="csharp-04.html">← Previous: 04 · Generics & Design</a><a href="csharp-06.html">Next: 06 · Modern C# →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer><section><h2>Worked examples: exceptions, files, JSON and configuration</h2>
+<h3>Exception handling with try/catch/finally</h3>
+<pre><code>try
+{
+    int age = int.Parse("not-a-number");
+    Console.WriteLine(age);
+}
+catch (FormatException ex)
+{
+    Console.WriteLine($"Invalid numeric format: {ex.Message}");
+}
+finally
+{
+    Console.WriteLine("Validation attempt finished.");
+}</code></pre>
+<p>Catch the most specific exception you can handle. <code>finally</code> runs whether an exception occurs or not; for disposable resources prefer <code>using</code>/<code>await using</code>.</p>
+<h3>Exception propagation and stack preservation</h3>
+<pre><code>static void RegisterPatient()
+{
+    ValidatePatient();
+}
+
+static void ValidatePatient()
+{
+    throw new InvalidOperationException("Patient registration rule failed.");
+}
+
+try
+{
+    RegisterPatient();
+}
+catch (InvalidOperationException)
+{
+    // "throw;" preserves the original stack trace.
+    throw;
+}</code></pre>
+<p>Do not use <code>throw ex;</code> when rethrowing; it resets the stack trace origin. Either handle the exception meaningfully or let it propagate.</p>
+<h3>Custom domain exception</h3>
+<pre><code>public sealed class DuplicateMedicalRecordException : Exception
+{
+    public DuplicateMedicalRecordException(string mrn)
+        : base($"Medical record number '{mrn}' already exists.")
+    {
+        MedicalRecordNumber = mrn;
+    }
+
+    public string MedicalRecordNumber { get; }
+}
+
+static void EnsureUniqueMrn(string mrn, bool exists)
+{
+    if (exists)
+        throw new DuplicateMedicalRecordException(mrn);
+}</code></pre>
+<p>Use custom exceptions when callers can respond to a meaningful failure category. Avoid building a large hierarchy for every validation message; ordinary invalid input is often better represented as a validation result.</p>
+<h3>File paths and safe text file operations</h3>
+<pre><code>string folder = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+    "HospitalApp");
+
+Directory.CreateDirectory(folder);
+string filePath = Path.Combine(folder, "daily-report.txt");
+
+await File.WriteAllTextAsync(filePath, "Daily collection: 125000");
+string report = await File.ReadAllTextAsync(filePath);
+Console.WriteLine(report);</code></pre>
+<p>Use <code>Path.Combine</code> rather than manually joining path separators. Validate file names and permissions when paths come from user input. Do not store secrets or sensitive patient data in unprotected plain text files.</p>
+<h3>Append audit events</h3>
+<pre><code>string auditPath = Path.Combine(folder, "audit.log");
+string auditLine = $"{DateTimeOffset.UtcNow:O} | PatientViewed | User=42";
+
+await File.AppendAllTextAsync(auditPath, auditLine + Environment.NewLine);</code></pre>
+<p>This simple example is not a production audit system: concurrent writes, tamper resistance, retention, access controls and centralized storage need deliberate design.</p>
+<h3>JSON serialization</h3>
+<pre><code>using System.Text.Json;
+
+public sealed record PatientExport(int Id, string Mrn, string Name);
+
+var export = new PatientExport(1205, "MR-1205", "Amina Khan");
+var options = new JsonSerializerOptions { WriteIndented = true };
+
+string json = JsonSerializer.Serialize(export, options);
+Console.WriteLine(json);
+
+PatientExport? restored =
+    JsonSerializer.Deserialize&lt;PatientExport&gt;(json);</code></pre>
+<h3>Deserialize external JSON defensively</h3>
+<pre><code>try
+{
+    PatientExport? imported = JsonSerializer.Deserialize&lt;PatientExport&gt;(json);
+
+    if (imported is null || imported.Id <= 0 ||
+        string.IsNullOrWhiteSpace(imported.Mrn))
+        throw new InvalidDataException("Patient export is invalid.");
+}
+catch (JsonException ex)
+{
+    Console.WriteLine($"Malformed JSON: {ex.Message}");
+}</code></pre>
+<p>Deserialization is not validation. Treat imported JSON as untrusted and validate required fields, ranges and authorization before using it.</p>
+<h3>Read configuration from appsettings.json</h3>
+<pre><code>// appsettings.json
+{
+  "Hospital": {
+    "Name": "General Hospital",
+    "DefaultPageSize": 25
+  }
+}</code></pre>
+<pre><code>using Microsoft.Extensions.Configuration;
+
+IConfiguration configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false)
+    .AddEnvironmentVariables()
+    .Build();
+
+string hospitalName = configuration["Hospital:Name"] ?? "Unknown";
+int pageSize = configuration.GetValue&lt;int&gt;("Hospital:DefaultPageSize");</code></pre>
+<h3>Environment variables override settings</h3>
+<pre><code>// Environment variable name for Hospital:DefaultPageSize:
+Environment.SetEnvironmentVariable("Hospital__DefaultPageSize", "50");
+
+var config = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json", optional: true)
+    .AddEnvironmentVariables()
+    .Build();
+
+int effectivePageSize = config.GetValue&lt;int&gt;("Hospital:DefaultPageSize");</code></pre>
+<p>Double underscore maps to a configuration hierarchy separator. Use environment variables or a secret manager for environment-specific values; never commit real production passwords.</p>
+<h3>Logging with ILogger</h3>
+<pre><code>using Microsoft.Extensions.Logging;
+
+using var loggerFactory = LoggerFactory.Create(builder =>
+    builder.AddConsole());
+
+ILogger logger = loggerFactory.CreateLogger("HospitalApp");
+logger.LogInformation(
+    "Registered patient {PatientId} at {RegisteredAtUtc}",
+    1205,
+    DateTimeOffset.UtcNow);</code></pre>
+<p>Structured logging stores values as fields. Avoid string interpolation in log templates and never write passwords, tokens or unnecessary patient medical information to logs.</p>
+<h3>Validation result instead of exception for normal input</h3>
+<pre><code>public sealed record ValidationResult(bool IsValid, string? Error)
+{
+    public static ValidationResult Valid() => new(true, null);
+    public static ValidationResult Invalid(string error) => new(false, error);
+}
+
+static ValidationResult ValidateMrn(string? mrn)
+{
+    return string.IsNullOrWhiteSpace(mrn)
+        ? ValidationResult.Invalid("MRN is required.")
+        : ValidationResult.Valid();
+}</code></pre>
+<h3>Practice</h3><ol><li>Read a patient export JSON file and validate it before importing.</li><li>Handle malformed JSON separately from file-not-found and permission errors.</li><li>Create a custom exception for a true domain conflict.</li><li>Load hospital settings from JSON and override one value using an environment variable.</li><li>Add structured logs while ensuring patient-sensitive fields are excluded.</li></ol>
+</section></article></main></body></html>
