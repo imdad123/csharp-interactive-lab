@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="PHP Collections and Async"><title>PHP Collections and Async | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head>
+<body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">PHP</span><span>PHP Professional</span></a><span class="top-note">PHP 8+ · Generators · Queues</span></header>
+<main class="shell"><aside class="sidebar"><p class="eyebrow">REFERENCE NAVIGATION</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">PHP Overview</a><a class="nav-link" href="roadmap.html">PHP Roadmap</a><a class="nav-link" href="fundamentals.html">Fundamentals</a><a class="nav-link" href="oop.html">OOP & Architecture</a><a class="nav-link" href="database.html">PDO & Database</a><a class="nav-link" href="web-api.html">Web & APIs</a><a class="nav-link" href="collections-async.html">Collections & Async</a><a class="nav-link" href="production.html">Testing & Production</a><a class="nav-link" href="../sql/index.html">SQL &amp; Databases</a><a class="nav-link" href="../git/index.html">Git &amp; GitHub</a><a class="nav-link" href="../engineering/index.html">CI/CD &amp; Cloud</a><a class="nav-link" href="../engineering/github.html">GitHub workflow guide</a><div class="sidebar-note"><strong>Reference approach</strong><p>Concept → syntax → multiple HMS examples → edge cases → professional practice → tests.</p></div></aside>
+<article class="content"><p class="eyebrow">PHP REFERENCE</p><h1>PHP collections, iteration and asynchronous work</h1><p class="lead">Choose data structures, transform records and handle long-running work using PHP's idioms.</p><section><h2>Arrays and collection choices</h2><p>PHP arrays are ordered maps. They can behave like indexed lists, dictionaries or mixed structures. Use clear key conventions and validate data at boundaries.</p><pre><code>$patients = [
+    ['id' => 101, 'name' => 'Amina', 'active' => true],
+    ['id' => 102, 'name' => 'Bilal', 'active' => false],
+];
+
+$byId = [];
+foreach ($patients as $patient) {
+    $byId[$patient['id']] = $patient;
+}
+$patient = $byId[101] ?? null;</code></pre></section>
+<section><h2>Filtering, mapping and reducing</h2><pre><code>$activePatients = array_filter(
+    $patients,
+    fn(array $p): bool => $p['active']
+);
+
+$names = array_map(
+    fn(array $p): string => $p['name'],
+    $activePatients
+);
+
+$total = array_reduce(
+    [1000, 1500, 750],
+    fn(int $sum, int $fee): int => $sum + $fee,
+    0
+);</code></pre><p>For larger application domains, Collections from Laravel or a dedicated collection library can improve expressiveness. Understand whether operations return arrays, iterators or lazy collections.</p></section>
+<section><h2>Generators and iteration</h2><pre><code>function readAppointments(PDO $pdo): Generator
+{
+    $stmt = $pdo->query(
+        'SELECT AppointmentId, PatientId, AppointmentDate
+         FROM Appointments ORDER BY AppointmentDate'
+    );
+
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        yield $row;
+    }
+}
+
+foreach (readAppointments($pdo) as $appointment) {
+    // Process one row at a time instead of loading all rows.
+}</code></pre><p>Generators are useful for large exports and streaming transformations. They do not automatically make a database query asynchronous.</p></section>
+<section><h2>Callbacks, closures and first-class callables</h2><pre><code>$isValidPatient = static function (array $patient): bool {
+    return ($patient['active'] ?? false) === true;
+};
+
+$valid = array_filter($patients, $isValidPatient);</code></pre><p>Closures can capture variables with use. Prefer explicit inputs and small callbacks so hidden dependencies do not make code difficult to test.</p></section>
+<section><h2>Asynchronous work in PHP</h2><p>Traditional PHP-FPM request handling is synchronous from the application's perspective. Async and concurrent execution is typically provided by a runtime or library such as ReactPHP, Amp, Swoole or RoadRunner. Queues and background workers are often a more straightforward production choice for reminders, reports and long-running tasks.</p><pre><code>// Framework-neutral job idea:
+final class SendAppointmentReminder
+{
+    public function __construct(
+        public readonly int $appointmentId
+    ) {}
+}
+
+// Dispatch this job to a queue worker rather than delaying
+// the patient's HTTP response while sending email/SMS.</code></pre></section><footer>Programming Academy · Practical reference · Hospital HMS examples</footer></article></main></body></html>
