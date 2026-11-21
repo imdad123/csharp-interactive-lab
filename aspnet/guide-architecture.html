@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASP.NET Core architecture and ecosystem | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">API</span><span>ASP.NET Core <strong>Backend Reference</strong></span></a><span class="top-note">ASP.NET Core · Hospital HMS</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">ASP.NET CORE</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="../csharp.html">C# Language</a><a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="roadmap.html">Complete roadmap</a><a class="nav-link " href="guide-prerequisites.html">Prerequisites</a><a class="nav-link " href="guide-web.html">Web fundamentals</a><a class="nav-link " href="guide-data.html">Data and ORM</a><a class="nav-link " href="guide-platform.html">DI, logging, cloud</a><a class="nav-link " href="guide-communication.html">API and real-time</a><a class="nav-link " href="guide-workers.html">Background and messaging</a><a class="nav-link " href="guide-testing.html">Testing and CI/CD</a><a class="nav-link active" href="guide-architecture.html">Architecture and ecosystem</a><a class="nav-link" href="../sql/index.html">SQL & Databases</a><a class="nav-link" href="../engineering/cicd.html">CI/CD & Cloud</a></aside><article class="content"><p class="eyebrow">DETAILED REFERENCE GUIDE</p><h1>ASP.NET Core architecture and ecosystem</h1><p class="lead">Concept, purpose, code examples and production considerations with hospital application scenarios.</p><section><h2>Software design and architecture</h2><p>Separate domain rules, application use cases, infrastructure adapters and delivery endpoints. Dependencies should point toward stable business rules rather than framework details.</p><pre><code>src/
+  Hospital.Domain/
+  Hospital.Application/
+  Hospital.Infrastructure/
+  Hospital.Api/
+tests/
+  Hospital.UnitTests/
+  Hospital.IntegrationTests/</code></pre></section>,<section><h2>MediatR</h2><p>MediatR implements in-process request/handler and notification patterns. It can organize use cases and pipeline behaviors, but direct service calls are often simpler for small applications.</p><pre><code>public sealed record GetPatientQuery(int Id) : IRequest&lt;PatientDto?&gt;;
+public sealed class GetPatientHandler(IPatientRepository repo)
+ : IRequestHandler&lt;GetPatientQuery, PatientDto?&gt;
+{
+ public Task&lt;PatientDto?&gt; Handle(GetPatientQuery q, CancellationToken ct)
+  =&gt; repo.FindAsync(q.Id, ct);
+}</code></pre></section>,<section><h2>FluentValidation</h2><p>FluentValidation expresses request validation in dedicated validators. Domain invariants must still be enforced in application/domain logic.</p><pre><code>public sealed class RegisterPatientValidator : AbstractValidator&lt;RegisterPatientRequest&gt;
+{
+ public RegisterPatientValidator()
+ {
+  RuleFor(x =&gt; x.FullName).NotEmpty().MaximumLength(150);
+  RuleFor(x =&gt; x.Mrn).NotEmpty().MaximumLength(30);
+ }
+}</code></pre></section>,<section><h2>Polly resilience</h2><p>Polly provides retry, timeout, circuit breaker and other resilience strategies. Use bounded policies for transient remote failures and ensure retried operations are idempotent.</p><pre><code>builder.Services.AddHttpClient&lt;LabClient&gt;()
+ .AddStandardResilienceHandler();</code></pre></section>,<section><h2>Marten</h2><p>Marten provides document database and event-store capabilities on PostgreSQL. Consider it when document/event-sourcing patterns fit the domain and the team can operate PostgreSQL.</p><pre><code>var patient = await session.LoadAsync&lt;PatientDocument&gt;(patientId, ct);
+patient!.FullName = request.FullName;
+session.Store(patient);
+await session.SaveChangesAsync(ct);</code></pre></section>,<section><h2>Scalar and OpenAPI</h2><p>OpenAPI describes HTTP API contracts. Scalar provides an API reference UI for exploring the OpenAPI document; keep generated docs aligned with runtime endpoints.</p><pre><code>builder.Services.AddOpenApi();
+app.MapOpenApi();
+// Configure Scalar UI package to read /openapi/v1.json</code></pre></section>,<section><h2>.NET Aspire</h2><p>Aspire provides tooling/orchestration for distributed .NET applications, local composition, service discovery and observability integrations.</p><pre><code>var db = builder.AddPostgres("postgres").AddDatabase("hospital");
+var api = builder.AddProject&lt;Projects.Hospital_Api&gt;("hospital-api");
+api.WithReference(db);</code></pre></section>,<section><h2>Dapr, Orleans and Steeltoe</h2><p>Dapr provides distributed app building blocks such as service invocation, pub/sub and state. Orleans provides a virtual actor model. Steeltoe integrates cloud-native patterns for supported environments. These are specialized options, not mandatory ASP.NET components.</p><pre><code>// Dapr service invocation concept:
+var patient = await daprClient.InvokeMethodAsync&lt;PatientDto&gt;(
+ HttpMethod.Get, "patient-service", $"api/patients/{id}", ct);</code></pre></section>,<section><h2>Distributed locks</h2><p>Distributed locks coordinate work across application instances but require lease and failure handling. Prefer database uniqueness, optimistic concurrency and idempotency when those solve the problem.</p><pre><code>await using var lease = await lockProvider.AcquireAsync("daily-billing", ct);
+await billing.RunAsync(ct);</code></pre></section>,<section><h2>BenchmarkDotNet</h2><p>BenchmarkDotNet runs repeatable microbenchmarks and measures time/allocations. Use production profiling for whole-system bottlenecks.</p><pre><code>[MemoryDiagnoser]
+public class MrnBenchmarks
+{
+ [Benchmark] public string Normalize() =&gt; " mr-1205 ".Trim().ToUpperInvariant();
+}</code></pre></section>,<section><h2>Razor, Scriban and Fluid templates</h2><p>Razor is native ASP.NET templating for views/components. Scriban and Fluid are standalone template engines for email/document generation. Restrict template access and avoid executing untrusted template code.</p><pre><code>var template = Template.Parse("Hello {{ patient.name }}");
+var output = template.Render(new { patient = new { name = "Amina" } });</code></pre></section>,<section><h2>Blazor and .NET MAUI</h2><p>Blazor builds interactive web UIs with C# components. .NET MAUI builds cross-platform native clients. Both can consume ASP.NET Core APIs but do not replace backend responsibilities.</p><pre><code>&lt;button @onclick="Increment"&gt;Bookings: @count&lt;/button&gt;
+@code { private int count; private void Increment() =&gt; count++; }</code></pre></section><footer>Programming Academy · ASP.NET Core reference</footer></article></main></body></html>
