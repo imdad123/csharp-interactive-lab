@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="PHP Testing and Production"><title>PHP Testing and Production | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head>
+<body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">PHP</span><span>PHP Professional</span></a><span class="top-note">PHPUnit · Composer · Docker · CI/CD</span></header>
+<main class="shell"><aside class="sidebar"><p class="eyebrow">REFERENCE NAVIGATION</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">PHP Overview</a><a class="nav-link" href="roadmap.html">PHP Roadmap</a><a class="nav-link" href="fundamentals.html">Fundamentals</a><a class="nav-link" href="oop.html">OOP & Architecture</a><a class="nav-link" href="database.html">PDO & Database</a><a class="nav-link" href="web-api.html">Web & APIs</a><a class="nav-link" href="collections-async.html">Collections & Async</a><a class="nav-link" href="production.html">Testing & Production</a><a class="nav-link" href="../sql/index.html">SQL &amp; Databases</a><a class="nav-link" href="../git/index.html">Git &amp; GitHub</a><a class="nav-link" href="../engineering/index.html">CI/CD &amp; Cloud</a><a class="nav-link" href="../engineering/github.html">GitHub workflow guide</a><div class="sidebar-note"><strong>Reference approach</strong><p>Concept → syntax → multiple HMS examples → edge cases → professional practice → tests.</p></div></aside>
+<article class="content"><p class="eyebrow">PHP REFERENCE</p><h1>PHP testing, security and production delivery</h1><p class="lead">A practical guide to tests, code quality, security, containers and deployment.</p><section><h2>Testing with PHPUnit</h2><pre><code>use PHPUnit\Framework\TestCase;
+
+final class ConsultationFeeTest extends TestCase
+{
+    public function testDiscountCannotExceedFee(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        ConsultationFee::fromAmounts(1000, 1200);
+    }
+}</code></pre><p>Separate domain rules from superglobals, HTTP request objects and database connections. Test business rules directly, then add integration tests against a real test database.</p></section>
+<section><h2>Security reference</h2><ul><li>Hash passwords with password_hash and verify with password_verify.</li><li>Use PDO prepared statements; never concatenate untrusted input into SQL.</li><li>Escape output for its HTML context to prevent XSS.</li><li>Use CSRF tokens for cookie-authenticated browser forms.</li><li>Enforce authorization on every protected operation and record sensitive access.</li><li>Validate uploaded file size, MIME/content, extension and storage location.</li><li>Keep secrets outside the repository and rotate exposed credentials.</li></ul></section>
+<section><h2>Composer, standards and static analysis</h2><pre><code>composer init
+composer require --dev phpunit/phpunit
+composer require --dev phpstan/phpstan
+composer dump-autoload</code></pre><p>Use PSR-4 autoloading, PSR coding standards, PHPStan or Psalm, PHP_CodeSniffer/PHP-CS-Fixer and a lock file committed to version control.</p></section>
+<section><h2>Docker and CI/CD</h2><p>Build a reproducible PHP runtime image, install dependencies from composer.lock, run tests and static analysis in CI, build an immutable artifact, then deploy to staging and production with environment-specific secrets. Run database migrations as a controlled release step.</p><pre><code>composer install --no-interaction --prefer-dist
+vendor/bin/phpunit
+vendor/bin/phpstan analyse
+vendor/bin/phpcs src</code></pre></section><footer>Programming Academy · Practical reference · Hospital HMS examples</footer></article></main></body></html>
