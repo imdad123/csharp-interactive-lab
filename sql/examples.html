@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="SQL Server and MySQL Examples"><title>SQL Server and MySQL Examples | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">SQL</span><span>SQL & Database Engineering</span></a><span class="top-note">T-SQL · MySQL · Query tuning</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">ENGINEERING REFERENCE</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">Database overview</a><a class="nav-link" href="roadmap.html">Database roadmap</a><a class="nav-link active" href="examples.html">SQL examples</a></aside><article class="content"><p class="eyebrow">DATABASE REFERENCE</p><h1>SQL Server and MySQL side-by-side examples</h1><p class="lead">Compare common production tasks in T-SQL and MySQL while learning which SQL concepts are portable and which are vendor-specific.</p><section><h2>Schema and keys — SQL Server</h2><pre><code>CREATE TABLE dbo.Patients (
+    PatientId int IDENTITY(1,1) PRIMARY KEY,
+    MRN varchar(20) NOT NULL UNIQUE,
+    FullName nvarchar(150) NOT NULL,
+    DateOfBirth date NULL,
+    IsActive bit NOT NULL CONSTRAINT DF_Patients_IsActive DEFAULT (1)
+);</code></pre></section>
+<section><h2>Schema and keys — MySQL</h2><pre><code>CREATE TABLE Patients (
+    PatientId int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    MRN varchar(20) NOT NULL UNIQUE,
+    FullName varchar(150) NOT NULL,
+    DateOfBirth date NULL,
+    IsActive boolean NOT NULL DEFAULT true
+) ENGINE=InnoDB;</code></pre><p>SQL Server uses IDENTITY and bit in this example; MySQL uses AUTO_INCREMENT and BOOLEAN (an alias for TINYINT(1)). Collation, Unicode behavior and default constraints differ by engine.</p></section>
+<section><h2>Safe parameterized query</h2><pre><code>-- T-SQL
+SELECT PatientId, MRN, FullName
+FROM dbo.Patients
+WHERE PatientId = @PatientId;</code></pre><pre><code>-- MySQL
+SELECT PatientId, MRN, FullName
+FROM Patients
+WHERE PatientId = ?;</code></pre><p>Parameter placeholder syntax depends on the driver. Parameters bind values, not identifiers such as table names or sort directions. Allow-list dynamic identifiers.</p></section>
+<section><h2>Joins and reporting</h2><pre><code>SELECT
+    a.AppointmentId,
+    p.MRN,
+    p.FullName,
+    d.DoctorName,
+    a.AppointmentDate
+FROM Appointments AS a
+JOIN Patients AS p ON p.PatientId = a.PatientId
+JOIN Doctors AS d ON d.DoctorId = a.DoctorId
+WHERE a.AppointmentDate >= @FromDate
+  AND a.AppointmentDate < @ToDate
+ORDER BY a.AppointmentDate;</code></pre><p>This join and date-range pattern is broadly portable; parameter declaration and date/time types vary by database.</p></section>
+<section><h2>Transactions for payment posting</h2><pre><code>-- T-SQL
+SET XACT_ABORT ON;
+BEGIN TRY
+    BEGIN TRANSACTION;
+
+    INSERT dbo.Payments(InvoiceId, Amount, PaidAt)
+    VALUES (@InvoiceId, @Amount, SYSUTCDATETIME());
+
+    UPDATE dbo.Invoices
+    SET PaidAmount = PaidAmount + @Amount
+    WHERE InvoiceId = @InvoiceId;
+
+    COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+    THROW;
+END CATCH;</code></pre><p>MySQL/InnoDB uses START TRANSACTION, COMMIT and ROLLBACK, with handler syntax inside stored programs. Application-level transaction APIs are often clearer for multi-step business workflows.</p></section>
+<section><h2>Index and query plan examples</h2><pre><code>-- SQL Server
+CREATE INDEX IX_Appointments_Doctor_Date
+ON dbo.Appointments(DoctorId, AppointmentDate)
+INCLUDE (PatientId, Status);
+
+-- MySQL
+CREATE INDEX IX_Appointments_Doctor_Date
+ON Appointments(DoctorId, AppointmentDate);
+
+-- Inspect plans
+-- SQL Server: Actual Execution Plan / SET STATISTICS IO, TIME ON
+-- MySQL: EXPLAIN ANALYZE SELECT ...</code></pre><p>Indexes should follow measured query patterns. Every extra index adds storage and write cost. Compare estimated and actual plans and validate with representative data volumes.</p></section>
+<section><h2>More database topics to master</h2><p>NULL semantics, constraints, normalization, views, procedures, functions, triggers, CTEs, recursive queries, window functions, isolation levels, row/version locking, deadlocks, partitioning, replication, backups, point-in-time restore, encryption, auditing, connection pools and schema migrations.</p></section><footer>Programming Academy · Production engineering reference</footer></article></main></body></html>
