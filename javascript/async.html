@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="JavaScript Async Programming"><title>JavaScript Async Programming | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head>
+<body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">JS</span><span>JavaScript & TypeScript</span></a><span class="top-note">Promises · Event loop · AbortController</span></header>
+<main class="shell"><aside class="sidebar"><p class="eyebrow">REFERENCE NAVIGATION</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">JavaScript Overview</a><a class="nav-link" href="roadmap.html">Roadmap</a><a class="nav-link" href="fundamentals.html">Language fundamentals</a><a class="nav-link" href="collections.html">Objects & collections</a><a class="nav-link" href="oop.html">OOP & modules</a><a class="nav-link" href="async.html">Async JavaScript</a><a class="nav-link" href="web-api.html">Node.js & APIs</a><a class="nav-link" href="testing.html">Testing</a><a class="nav-link" href="production.html">Production engineering</a><a class="nav-link" href="../sql/index.html">SQL &amp; Databases</a><a class="nav-link" href="../git/index.html">Git &amp; GitHub</a><a class="nav-link" href="../engineering/index.html">CI/CD &amp; Cloud</a><a class="nav-link" href="../engineering/github.html">GitHub workflow guide</a><div class="sidebar-note"><strong>Reference approach</strong><p>Concept → syntax → multiple HMS examples → edge cases → professional practice → tests.</p></div></aside>
+<article class="content"><p class="eyebrow">JAVASCRIPT REFERENCE</p><h1>Promises, async/await and the event loop</h1><p class="lead">Build responsive I/O workflows and understand scheduling, cancellation and concurrency.</p><section><h2>Promises and async/await</h2><pre><code>async function getPatient(patientId) {
+  const response = await fetch(`/api/patients/${patientId}`);
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+try {
+  const patient = await getPatient(101);
+  console.log(patient);
+} catch (error) {
+  console.error("Patient lookup failed", error);
+}</code></pre></section>
+<section><h2>Parallel and sequential work</h2><pre><code>// Independent requests can run concurrently.
+const [patient, appointments] = await Promise.all([
+  getPatient(101),
+  getAppointments(101)
+]);
+
+// Use sequential await when the second operation depends on the first.
+const created = await createAppointment(request);
+await sendConfirmation(created.id);</code></pre><p>Understand Promise.all, allSettled, race, any, rejection propagation, unhandled rejections and cancellation with AbortController.</p></section>
+<section><h2>Event loop and concurrency model</h2><p>JavaScript executes synchronous code on an event loop. Promise callbacks use the microtask queue; timers and I/O callbacks have their own scheduling. Async I/O does not make CPU-heavy loops parallel. Use worker threads or separate services for CPU-intensive work.</p></section>
+<section><h2>Cancellation and timeouts</h2><pre><code>const controller = new AbortController();
+const timeout = setTimeout(() => controller.abort(), 5000);
+
+try {
+  const response = await fetch("/api/appointments", {
+    signal: controller.signal
+  });
+} finally {
+  clearTimeout(timeout);
+}</code></pre></section><footer>Programming Academy · Practical reference · Hospital HMS examples</footer></article></main></body></html>
