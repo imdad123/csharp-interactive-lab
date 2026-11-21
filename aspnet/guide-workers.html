@@ -1,0 +1,34 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASP.NET Core background jobs, messaging and gateways | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">API</span><span>ASP.NET Core <strong>Backend Reference</strong></span></a><span class="top-note">ASP.NET Core · Hospital HMS</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">ASP.NET CORE</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="../csharp.html">C# Language</a><a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="roadmap.html">Complete roadmap</a><a class="nav-link " href="guide-prerequisites.html">Prerequisites</a><a class="nav-link " href="guide-web.html">Web fundamentals</a><a class="nav-link " href="guide-data.html">Data and ORM</a><a class="nav-link " href="guide-platform.html">DI, logging, cloud</a><a class="nav-link " href="guide-communication.html">API and real-time</a><a class="nav-link active" href="guide-workers.html">Background and messaging</a><a class="nav-link " href="guide-testing.html">Testing and CI/CD</a><a class="nav-link " href="guide-architecture.html">Architecture and ecosystem</a><a class="nav-link" href="../sql/index.html">SQL & Databases</a><a class="nav-link" href="../engineering/cicd.html">CI/CD & Cloud</a></aside><article class="content"><p class="eyebrow">DETAILED REFERENCE GUIDE</p><h1>ASP.NET Core background jobs, messaging and gateways</h1><p class="lead">Concept, purpose, code examples and production considerations with hospital application scenarios.</p><section><h2>Native BackgroundService and IHostedService</h2><p>Hosted services run background work inside the application host. Observe cancellation, keep iterations bounded and create a DI scope when scoped services are required.</p><pre><code>public sealed class ReminderWorker(IServiceScopeFactory scopes) : BackgroundService
+{
+ protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+ {
+  while (!stoppingToken.IsCancellationRequested)
+  {
+   await using var scope = scopes.CreateAsyncScope();
+   var sender = scope.ServiceProvider.GetRequiredService&lt;IReminderSender&gt;();
+   await sender.SendDueRemindersAsync(stoppingToken);
+   await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+  }
+ }
+}</code></pre></section>,<section><h2>Hangfire, Quartz and Coravel</h2><p>Hangfire provides persistent jobs and dashboard capabilities; Quartz is a mature scheduler; Coravel offers lightweight scheduling. Compare persistence, clustering, retries, monitoring and licensing/hosting needs.</p><pre><code>// Hangfire recurring job example (after package and storage setup):
+RecurringJob.AddOrUpdate&lt;ReminderJob&gt;(
+ "appointment-reminders", job =&gt; job.SendDueAsync(), Cron.MinuteInterval(5));</code></pre></section>,<section><h2>Message brokers: RabbitMQ, ActiveMQ, Kafka, NetMQ and Azure Service Bus</h2><p>Message brokers decouple producers and consumers. RabbitMQ/ActiveMQ and Azure Service Bus support queue/routing patterns; Kafka is a distributed event log; NetMQ is a ZeroMQ-style messaging library. Choose by durability, ordering, throughput and operations.</p><pre><code>public sealed record InvoiceFinalized(Guid EventId, int InvoiceId, DateTime OccurredAtUtc);
+await bus.PublishAsync(new InvoiceFinalized(Guid.NewGuid(), invoice.Id, DateTime.UtcNow), ct);</code></pre></section>,<section><h2>Message bus frameworks: NServiceBus, MassTransit and EasyNetQ</h2><p>These frameworks provide higher-level consumer, retry, routing and workflow abstractions over supported transports. They add conventions and operational dependencies; select one deliberately.</p><pre><code>public sealed class InvoiceFinalizedConsumer : IConsumer&lt;InvoiceFinalized&gt;
+{
+ public Task Consume(ConsumeContext&lt;InvoiceFinalized&gt; context)
+  =&gt; SendReceiptAsync(context.Message.InvoiceId);
+}</code></pre></section>,<section><h2>Outbox and idempotent message processing</h2><p>A database transaction and broker publish are not automatically atomic. The outbox records events in the same transaction as business data; a dispatcher publishes them later. Consumers should handle duplicate deliveries.</p><pre><code>// In the same DB transaction as invoice finalization:
+db.Invoices.Update(invoice);
+db.OutboxMessages.Add(OutboxMessage.From(new InvoiceFinalized(...)));
+await db.SaveChangesAsync(ct);</code></pre></section>,<section><h2>Microservices architecture</h2><p>Microservices are independently deployable services aligned to business capabilities. They add network failures, distributed consistency, deployment and observability costs. A modular monolith is often the better starting point.</p><pre><code>src/
+  Modules/Patients/Patients.Domain/
+  Modules/Patients/Patients.Application/
+  Modules/Appointments/Appointments.Domain/
+  Modules/Appointments/Appointments.Application/
+  Hospital.Api/</code></pre></section>,<section><h2>API gateways: Ocelot and YARP</h2><p>A gateway routes client requests to backend services and can centralize edge policies. It does not replace service authorization or domain rules.</p><pre><code>builder.Services.AddReverseProxy()
+ .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+app.MapReverseProxy();</code></pre></section>,<section><h2>Docker containerization</h2><p>Docker packages application output and runtime dependencies into an image. Use multi-stage builds, non-root execution, health checks and externalized configuration.</p><pre><code>dotnet publish -c Release -o ./publish
+docker build -t hospital-api:1.0 .
+docker run --rm -p 8080:8080 hospital-api:1.0</code></pre></section>,<section><h2>Kubernetes</h2><p>Kubernetes orchestrates containers with deployments, services, probes, configuration and scaling. Use it when the operational need justifies cluster complexity.</p><pre><code>kubectl apply -f deployment.yaml
+kubectl get deployments
+kubectl rollout status deployment/hospital-api</code></pre></section><footer>Programming Academy · ASP.NET Core reference</footer></article></main></body></html>
