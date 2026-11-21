@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Python OOP and Typing"><title>Python OOP and Typing | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head>
+<body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">PY</span><span>Python Engineering</span></a><span class="top-note">Dataclasses · Protocol · Generics</span></header>
+<main class="shell"><aside class="sidebar"><p class="eyebrow">REFERENCE NAVIGATION</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">Python Overview</a><a class="nav-link" href="roadmap.html">Roadmap</a><a class="nav-link" href="fundamentals.html">Language fundamentals</a><a class="nav-link" href="collections.html">Collections & iteration</a><a class="nav-link" href="oop.html">OOP & typing</a><a class="nav-link" href="async.html">Async & concurrency</a><a class="nav-link" href="web-api.html">FastAPI & APIs</a><a class="nav-link" href="testing.html">Testing</a><a class="nav-link" href="production.html">Production engineering</a><a class="nav-link" href="../sql/index.html">SQL &amp; Databases</a><a class="nav-link" href="../git/index.html">Git &amp; GitHub</a><a class="nav-link" href="../engineering/index.html">CI/CD &amp; Cloud</a><a class="nav-link" href="../engineering/github.html">GitHub workflow guide</a><div class="sidebar-note"><strong>Reference approach</strong><p>Concept → syntax → multiple HMS examples → edge cases → professional practice → tests.</p></div></aside><article class="content"><p class="eyebrow">PYTHON REFERENCE</p><h1>Python OOP, dataclasses and typing</h1><p class="lead">Model domain concepts and define maintainable contracts using Python's object model and type system.</p><section><h2>Classes, dataclasses and encapsulation</h2><pre><code>from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class PatientSummary:
+    patient_id: int
+    full_name: str
+    mrn: str
+
+class Invoice:
+    def __init__(self, invoice_id: int, total: int) -> None:
+        if total < 0:
+            raise ValueError("Total cannot be negative")
+        self.invoice_id = invoice_id
+        self._total = total
+        self._paid = 0
+
+    @property
+    def balance(self) -> int:
+        return self._total - self._paid</code></pre><p>Python uses conventions such as leading underscores rather than C#-style access modifiers. Dataclasses reduce boilerplate for data carriers; they do not replace domain validation.</p></section>
+<section><h2>Composition, inheritance and protocols</h2><pre><code>from typing import Protocol
+
+class AppointmentRepository(Protocol):
+    def get_by_id(self, appointment_id: int) -> dict | None: ...
+
+class AppointmentService:
+    def __init__(self, repository: AppointmentRepository) -> None:
+        self._repository = repository
+
+    def find(self, appointment_id: int):
+        return self._repository.get_by_id(appointment_id)</code></pre><p>Protocols provide structural typing: an object can satisfy the contract by implementing the required behavior. Prefer composition and dependency injection over deep inheritance trees.</p></section>
+<section><h2>Type hints, generics and enums</h2><pre><code>from enum import StrEnum
+from typing import TypeVar, Generic
+
+class AppointmentStatus(StrEnum):
+    BOOKED = "booked"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+T = TypeVar("T")
+class Result(Generic[T]):
+    def __init__(self, value: T | None, error: str | None = None):
+        self.value = value
+        self.error = error</code></pre><p>Learn Optional/union types, Literal, TypedDict, Protocol, TypeVar, ParamSpec and type narrowing with mypy or Pyright.</p></section><footer>Programming Academy · Practical reference · Hospital HMS examples</footer></article></main></body></html>
