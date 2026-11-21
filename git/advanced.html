@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Advanced Git and Recovery</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">GIT</span><span>Git <strong>Advanced</strong></span></a><span class="top-note">Recovery · History management</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">GIT ROADMAP</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">Git Overview</a><a class="nav-link" href="roadmap.html">Roadmap</a><a class="nav-link" href="fundamentals.html">01 · Core Git</a><a class="nav-link" href="branching.html">02 · Collaboration</a><a class="nav-link active" href="advanced.html">03 · Advanced Git</a><a class="nav-link" href="delivery.html">04 · Delivery</a></aside><article class="content"><p class="eyebrow">GIT · MODULE 03</p><h1>Advanced Git and safe recovery</h1><p class="lead">Professional Git skill includes recovering from mistakes without destroying teammates' work.</p><h2>Restore, reset and revert are different</h2><ul><li><strong>git restore:</strong> discard or restore file content in the working tree/index.</li><li><strong>git reset:</strong> move the current branch pointer and optionally change staging/working state. It can rewrite local history.</li><li><strong>git revert:</strong> create a new commit that reverses an earlier commit. Usually the safer choice for shared history.</li></ul><pre><code># Undo a pushed faulty commit safely by creating a new inverse commit
+git revert &lt;commit-sha&gt;
+
+# Unstage a file without discarding its edits
+git restore --staged src/PatientService.cs
+
+# Inspect recent branch movements when a commit seems lost
+git reflog</code></pre><p>Before destructive commands, inspect status and log. Avoid force-pushing shared branches. If a force push is genuinely required on a private feature branch, coordinate and prefer --force-with-lease over --force.</p><h2>Stash and cherry-pick</h2><pre><code>git stash push -m "WIP appointment validation"
+git stash list
+git stash pop
+
+# Apply one commit from another branch
+git cherry-pick &lt;commit-sha&gt;</code></pre><p>Stash temporarily shelves working changes. Cherry-pick copies a commit's change onto the current branch and creates a new commit.</p><h2>Tags and bisect</h2><pre><code>git tag -a v1.2.0 -m "Hospital HMS release 1.2.0"
+git push origin v1.2.0
+
+git bisect start
+git bisect bad
+git bisect good v1.1.0
+# test the checked-out revision, then mark good or bad
+git bisect good</code></pre><p>Tags identify release points. Bisect performs a binary search through commit history to locate the change that introduced a regression.</p><h2>Blame and reflog</h2><p>git blame shows which commit last changed each line; use it to understand context, not to assign blame to a person. Reflog records local reference movements and can help recover a commit after an accidental reset, until reflog entries expire and unreachable objects are pruned.</p><h2>Practice task</h2><ol><li>Make a faulty appointment validation commit and revert it.</li><li>Unstage a file while preserving its working changes.</li><li>Stash unfinished work and restore it later.</li><li>Cherry-pick a fix into a release branch.</li><li>Use bisect to find a deliberately introduced bug.</li></ol></section><nav class="page-nav"><a href="branching.html">← Collaboration</a><a href="delivery.html">Next: GitHub & Delivery →</a></nav><footer>Git track · Advanced recovery</footer></article></main></body></html>
