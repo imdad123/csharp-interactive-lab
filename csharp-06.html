@@ -11,4 +11,20 @@ var changed = summary with { Name = "Amina Khan" };</code></pre></section>
 <section><h2>Nullable reference types</h2><p>Nullable reference types provide compile-time analysis for possible null values. They do not guarantee runtime data is non-null. Validate external input and model optional values deliberately.</p></section>
 <section><h2>Modern syntax and APIs</h2><ul><li>Target-typed new, file-scoped namespaces and global using directives.</li><li>Null-coalescing, null-conditional operators and null patterns.</li><li>Required members and init-only setters.</li><li>Extension methods and iterator methods using yield return.</li><li>Attributes attach metadata; reflection inspects types and members at runtime.</li></ul></section>
 <section><h2>Memory and performance awareness</h2><p>Understand boxing/unboxing, allocations, Span&lt;T&gt; and ReadOnlySpan&lt;T&gt;, managed versus unmanaged resources, and profiling. Optimize only after measuring a real bottleneck.</p></section>
-<section><h2>HospitalApp practice</h2><p>Use records for immutable report DTOs, nullable annotations for optional values and pattern matching for appointment status. Do not add advanced performance features without a measured reason.</p></section><nav class="page-nav"><a href="csharp-05.html">← Previous: 05 · Exceptions & Files</a><a href="csharp-07.html">Next: 07 · Delegates & Async →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<section><h2>HospitalApp practice</h2><p>Use records for immutable report DTOs, nullable annotations for optional values and pattern matching for appointment status. Do not add advanced performance features without a measured reason.</p></section><section><h2>Deep dive: modern C# features in enterprise code</h2><h3>Records for data-shaped values</h3><p>DTOs often represent data rather than mutable entities with identity. Records provide concise syntax and value-oriented equality.</p><pre><code>public sealed record PatientSummary(int Id, string Name, string Ward);
+var first = new PatientSummary(10, "Amina", "Medical");
+var updated = first with { Ward = "Surgical" };
+Console.WriteLine(first == updated); // False</code></pre><p>Records suit request/response models and immutable snapshots, but do not deeply freeze nested objects automatically.</p><h3>Nullable reference types</h3><p>A missing phone and an empty phone are different. Nullable annotations help the compiler warn about possible null dereferences.</p><pre><code>#nullable enable
+string patientName = "Amina";
+string? phoneNumber = null;
+Console.WriteLine(phoneNumber?.Length ?? 0);</code></pre><p>Compiler annotations are not runtime validation: API input still needs validation.</p><h3>Pattern matching</h3><pre><code>string GetQueueLabel(AppointmentStatus status) => status switch
+{
+    AppointmentStatus.Waiting => "Waiting room",
+    AppointmentStatus.InConsultation => "With doctor",
+    AppointmentStatus.Completed => "Completed",
+    AppointmentStatus.Cancelled => "Cancelled",
+    _ => "Unknown"
+};</code></pre><h3>Tuples and deconstruction</h3><p>Tuples work for small local grouped results; public APIs and complex concepts are usually clearer as named records.</p><pre><code>static (int Count, decimal Total) Summarize(IEnumerable&lt;Invoice&gt; invoices)
+    => (invoices.Count(), invoices.Sum(x => x.Amount));
+var (count, total) = Summarize(monthlyInvoices);</code></pre><h3>Extension methods, reflection and performance</h3><p>Extension methods add cohesive helper behavior without modifying a type. Reflection inspects metadata at runtime and powers serializers, DI and ORMs; do not use it for ordinary property access. Measure before optimizing; understand allocations, boxing, spans and pooling when profiling identifies a bottleneck.</p><h3>Practice task</h3><ol><li>Represent appointment responses as records.</li><li>Enable nullable reference types.</li><li>Use a switch expression for appointment status.</li><li>Compare a tuple report result with a named record.</li></ol></section>
+<nav class="page-nav"><a href="csharp-05.html">← Previous: 05 · Exceptions & Files</a><a href="csharp-07.html">Next: 07 · Delegates & Async →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
