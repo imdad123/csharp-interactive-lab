@@ -36,4 +36,157 @@ public sealed class AppointmentService(IAppointmentNotifier notifier)
 }
 builder.Services.AddScoped&lt;AppointmentService&gt;();
 builder.Services.AddScoped&lt;IAppointmentNotifier, SmsAppointmentNotifier&gt;();</code></pre><p>Scoped suits request-oriented services using a scoped DbContext; Singleton is for safe shared services; Transient creates a new instance each resolution. Never inject a scoped DbContext into a singleton.</p><h3>Practice task</h3><ol><li>Create patient request/response DTOs.</li><li>Implement a generic in-memory repository.</li><li>Extract IAppointmentNotifier.</li><li>Inject a fake notifier in tests and real provider in production.</li></ol></section>
-<nav class="page-nav"><a href="csharp-03.html">← Previous: 03 · OOP</a><a href="csharp-05.html">Next: 05 · Exceptions & Files →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<nav class="page-nav"><a href="csharp-03.html">← Previous: 03 · OOP</a><a href="csharp-05.html">Next: 05 · Exceptions & Files →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer><section><h2>Worked examples: generics and application design</h2>
+<h3>Generic method</h3>
+<pre><code>static void PrintItems&lt;T&gt;(IEnumerable&lt;T&gt; items)
+{
+    foreach (T item in items)
+        Console.WriteLine(item);
+}
+
+PrintItems(new[] { 10, 20, 30 });
+PrintItems(new[] { "Cardiology", "Emergency" });</code></pre>
+<p>Generics let one algorithm work with multiple types while preserving compile-time type safety. They avoid repeated implementations and unsafe casts.</p>
+<h3>Generic class</h3>
+<pre><code>public sealed class ApiResult&lt;T&gt;
+{
+    public bool Success { get; init; }
+    public T? Data { get; init; }
+    public string? Error { get; init; }
+
+    public static ApiResult&lt;T&gt; Ok(T data)
+        => new() { Success = true, Data = data };
+
+    public static ApiResult&lt;T&gt; Fail(string error)
+        => new() { Success = false, Error = error };
+}
+
+ApiResult&lt;int&gt; patientIdResult = ApiResult&lt;int&gt;.Ok(1205);
+ApiResult&lt;string&gt; nameResult = ApiResult&lt;string&gt;.Ok("Amina");</code></pre>
+<h3>Generic constraints</h3>
+<pre><code>static T Create&lt;T&gt;() where T : new()
+    => new T();
+
+public interface IEntity
+{
+    int Id { get; }
+}
+
+static int GetId&lt;T&gt;(T entity) where T : IEntity
+    => entity.Id;</code></pre>
+<p>Constraints tell the compiler what operations are safe. Common constraints include <code>class</code>, <code>class?</code>, <code>struct</code>, <code>notnull</code>, interface/base-class constraints and <code>new()</code>. Choose the narrowest constraint that expresses the requirement.</p>
+<h3>Generic repository contract</h3>
+<pre><code>public interface IReadRepository&lt;TEntity, in TKey&gt;
+    where TEntity : class
+{
+    Task&lt;TEntity?&gt; FindAsync(TKey id, CancellationToken ct);
+    Task&lt;IReadOnlyList&lt;TEntity&gt;&gt; GetAllAsync(CancellationToken ct);
+}</code></pre>
+<p>Generic repositories can reduce repetitive CRUD plumbing, but they can also hide important query behavior and database capabilities. For EF Core, a focused application query/service can be clearer than a universal repository with dozens of methods.</p>
+<h3>Concrete repository implementation</h3>
+<pre><code>public sealed class PatientReadRepository(HospitalDbContext db)
+    : IReadRepository&lt;Patient, int&gt;
+{
+    public Task&lt;Patient?&gt; FindAsync(int id, CancellationToken ct)
+        => db.Patients.AsNoTracking()
+            .SingleOrDefaultAsync(p => p.Id == id, ct);
+
+    public async Task&lt;IReadOnlyList&lt;Patient&gt;&gt; GetAllAsync(CancellationToken ct)
+        => await db.Patients.AsNoTracking()
+            .OrderBy(p => p.FullName)
+            .ToListAsync(ct);
+}</code></pre>
+<h3>DTO versus entity</h3>
+<pre><code>// Persistence entity: database-focused shape.
+public sealed class PatientEntity
+{
+    public int Id { get; set; }
+    public string MedicalRecordNumber { get; set; } = "";
+    public string FullName { get; set; } = "";
+    public bool IsDeleted { get; set; }
+}
+
+// API/application contract: only fields this use case needs.
+public sealed record PatientSummaryDto(int Id, string Mrn, string FullName);
+
+static PatientSummaryDto ToDto(PatientEntity entity)
+    => new(entity.Id, entity.MedicalRecordNumber, entity.FullName);</code></pre>
+<h3>Service pattern and business workflow</h3>
+<pre><code>public sealed class RegisterPatientService(IPatientRepository repository)
+{
+    public async Task&lt;int&gt; ExecuteAsync(
+        RegisterPatientCommand command,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(command.FullName))
+            throw new ArgumentException("Patient name is required.");
+
+        if (await repository.MrnExistsAsync(command.Mrn, ct))
+            throw new InvalidOperationException("MRN already exists.");
+
+        var patient = new PatientEntity
+        {
+            MedicalRecordNumber = command.Mrn.Trim(),
+            FullName = command.FullName.Trim()
+        };
+
+        await repository.AddAsync(patient, ct);
+        return patient.Id;
+    }
+}
+
+public sealed record RegisterPatientCommand(string Mrn, string FullName);</code></pre>
+<h3>SOLID: single responsibility and dependency inversion</h3>
+<pre><code>public interface IReceiptSender
+{
+    Task SendAsync(string recipient, string receipt, CancellationToken ct);
+}
+
+public sealed class InvoiceService(IReceiptSender sender)
+{
+    public async Task FinalizeAsync(Invoice invoice, CancellationToken ct)
+    {
+        invoice.MarkFinalized();
+        await sender.SendAsync(invoice.PatientEmail, invoice.ToText(), ct);
+    }
+}</code></pre>
+<p>The invoice workflow depends on an abstraction rather than a concrete SMTP client. A separate implementation handles email delivery. This also makes the workflow easier to test.</p>
+<h3>Open/closed and strategy example</h3>
+<pre><code>public interface IDiscountPolicy
+{
+    decimal Calculate(decimal subtotal);
+}
+
+public sealed class SeniorDiscount : IDiscountPolicy
+{
+    public decimal Calculate(decimal subtotal) => subtotal * 0.10m;
+}
+
+public sealed class NoDiscount : IDiscountPolicy
+{
+    public decimal Calculate(decimal subtotal) => 0m;
+}
+
+static decimal GetPayable(decimal subtotal, IDiscountPolicy policy)
+    => subtotal - policy.Calculate(subtotal);</code></pre>
+<h3>Dependency injection without a web framework</h3>
+<pre><code>using Microsoft.Extensions.DependencyInjection;
+
+var services = new ServiceCollection();
+services.AddSingleton&lt;IClock, SystemClock&gt;();
+services.AddTransient&lt;AppointmentReminderService&gt;();
+
+using var provider = services.BuildServiceProvider();
+var reminder = provider.GetRequiredService&lt;AppointmentReminderService&gt;();</code></pre>
+<p>This demonstrates the DI container in a console process. ASP.NET Core uses the same Microsoft.Extensions.DependencyInjection abstractions and registers the service provider through its host.</p>
+<h3>Clean Architecture dependency direction</h3>
+<pre><code>src/
+  Hospital.Domain/          # entities and domain rules
+  Hospital.Application/     # use cases and interfaces
+  Hospital.Infrastructure/  # SQL Server, email, external services
+  Hospital.Console/         # console entry point / composition root
+tests/
+  Hospital.UnitTests/
+  Hospital.IntegrationTests/</code></pre>
+<p>Dependencies point inward: Infrastructure implements interfaces defined by Application; Domain should not depend on EF Core, ASP.NET Core or a database provider. Keep this architecture proportional to the system size.</p>
+</section></article></main></body></html>
