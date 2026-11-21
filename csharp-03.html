@@ -51,4 +51,210 @@ public sealed class CashPayment : IPaymentMethod
     public Task&lt;PaymentResult&gt; PayAsync(decimal amount, CancellationToken ct)
         => Task.FromResult(PaymentResult.Accepted(amount));
 }</code></pre><p>Invoice processing can depend on IPaymentMethod instead of hard-coding cash, card or another approved payment provider. The same contract supports different implementations.</p><h3>Access modifiers and design judgment</h3><p>Public is an external contract; private hides implementation; protected is available to derived types; internal limits access to the assembly. Prefer the narrowest access. A tiny calculation does not need a class hierarchy. Avoid one class per noun without a responsibility.</p><h3>Practice task</h3><ol><li>Implement Patient and Doctor.</li><li>Implement Appointment using composition.</li><li>Prevent booking for inactive patients.</li><li>Define IPaymentMethod and two implementations.</li><li>Test rules without console or database.</li></ol></section>
-<nav class="page-nav"><a href="csharp-02.html">← Previous: 02 · Collections & LINQ</a><a href="csharp-04.html">Next: 04 · Generics & Design →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<nav class="page-nav"><a href="csharp-02.html">← Previous: 02 · Collections & LINQ</a><a href="csharp-04.html">Next: 04 · Generics & Design →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer><section><h2>Worked examples: object-oriented programming</h2>
+<h3>Classes and objects</h3>
+<pre><code>public sealed class Patient
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+}
+
+var patient = new Patient { Id = 101, Name = "Amina Khan" };
+Console.WriteLine(patient.Name);</code></pre>
+<p>A class defines a reference type; an object is an instance. A class can contain state, behavior and rules. Keep business rules close to the data they protect when that makes the model easier to reason about.</p>
+<h3>Constructors and constructor validation</h3>
+<pre><code>public sealed class MedicalRecord
+{
+    public int Id { get; }
+    public string Mrn { get; }
+
+    public MedicalRecord(int id, string mrn)
+    {
+        if (id <= 0) throw new ArgumentOutOfRangeException(nameof(id));
+        if (string.IsNullOrWhiteSpace(mrn))
+            throw new ArgumentException("MRN is required.", nameof(mrn));
+
+        Id = id;
+        Mrn = mrn.Trim();
+    }
+}
+
+var record = new MedicalRecord(1001, "MR-001");</code></pre>
+<h3>Encapsulation: protect invariants</h3>
+<pre><code>public sealed class Invoice
+{
+    private readonly List&lt;InvoiceLine&gt; _lines = [];
+
+    public IReadOnlyList&lt;InvoiceLine&gt; Lines => _lines.AsReadOnly();
+    public decimal Total => _lines.Sum(line => line.Amount);
+
+    public void AddLine(string description, decimal amount)
+    {
+        if (string.IsNullOrWhiteSpace(description))
+            throw new ArgumentException("Description is required.");
+        if (amount <= 0)
+            throw new ArgumentOutOfRangeException(nameof(amount));
+
+        _lines.Add(new InvoiceLine(description, amount));
+    }
+}
+
+public sealed record InvoiceLine(string Description, decimal Amount);</code></pre>
+<h3>Methods, parameters and return values</h3>
+<pre><code>public static class BillingCalculator
+{
+    public static decimal CalculateBalance(
+        decimal invoiceTotal,
+        decimal amountPaid)
+    {
+        if (invoiceTotal < 0 || amountPaid < 0)
+            throw new ArgumentOutOfRangeException();
+
+        return invoiceTotal - amountPaid;
+    }
+}
+
+decimal balance = BillingCalculator.CalculateBalance(5000m, 2000m);</code></pre>
+<h3>Method overloading</h3>
+<pre><code>public static class PatientSearch
+{
+    public static string Normalize(string mrn)
+        => mrn.Trim().ToUpperInvariant();
+
+    public static string Normalize(string hospitalCode, string mrn)
+        => $"{hospitalCode.Trim().ToUpperInvariant()}-{Normalize(mrn)}";
+}
+
+string key1 = PatientSearch.Normalize(" mr-01 ");
+string key2 = PatientSearch.Normalize("GH", " mr-01 ");</code></pre>
+<p>Overloads share a name but differ by parameter list. Return type alone cannot distinguish overloads. Avoid overload sets that make calls ambiguous, especially when optional parameters are involved.</p>
+<h3>Access modifiers</h3>
+<pre><code>public class PatientService
+{
+    private readonly string _connectionName = "HospitalDb";
+    protected void WriteAudit(string action) { /* shared with derived classes */ }
+    internal void RebuildIndex() { /* same assembly only */ }
+    public void Register() { /* public contract */ }
+}</code></pre>
+<p>Use the least permissive visibility that supports the design. <code>private protected</code>, <code>protected internal</code> and nested-type visibility are additional tools; do not expose internal implementation details by default.</p>
+<h3>Properties and backing fields</h3>
+<pre><code>public sealed class PatientProfile
+{
+    private string _fullName = "";
+
+    public string FullName
+    {
+        get => _fullName;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentException("Name is required.");
+            _fullName = value.Trim();
+        }
+    }
+}</code></pre>
+<p>Use an auto-property for simple storage. Use a backing field when validation, normalization, notifications or lazy computation is needed. A property is an API surface, not merely a public field.</p>
+<h3>Value types versus reference types</h3>
+<pre><code>int originalAge = 30;
+int copiedAge = originalAge;
+copiedAge++;
+Console.WriteLine(originalAge); // 30
+
+var originalPatient = new PatientProfile { FullName = "Amina" };
+var secondReference = originalPatient;
+secondReference.FullName = "Sara";
+Console.WriteLine(originalPatient.FullName); // Sara</code></pre>
+<p>Value assignment copies the value. Reference assignment copies a reference to the same object. Structs are value types; classes are reference types. Avoid oversimplifying this as “all value types are on the stack and all reference types are on the heap”—storage depends on context and implementation.</p>
+<h3>Inheritance and base behavior</h3>
+<pre><code>public abstract class Person
+{
+    protected Person(string name) => Name = name;
+    public string Name { get; }
+}
+
+public sealed class Doctor : Person
+{
+    public string Specialty { get; }
+
+    public Doctor(string name, string specialty) : base(name)
+        => Specialty = specialty;
+}
+
+var doctor = new Doctor("Dr. Sara", "Cardiology");</code></pre>
+<h3>Composition and association</h3>
+<pre><code>public sealed class Appointment
+{
+    public PatientProfile Patient { get; }
+    public Doctor Doctor { get; }
+    public DateTime StartsAt { get; }
+
+    public Appointment(PatientProfile patient, Doctor doctor, DateTime startsAt)
+    {
+        Patient = patient;
+        Doctor = doctor;
+        StartsAt = startsAt;
+    }
+}</code></pre>
+<p>An appointment is associated with a patient and doctor. Composition means an object owns or coordinates other objects; inheritance means an “is-a” relationship. Prefer composition when a type needs collaborators rather than pretending one type is a subtype of another.</p>
+<h3>Polymorphism and virtual dispatch</h3>
+<pre><code>public abstract class Notification
+{
+    public abstract Task SendAsync(string message, CancellationToken ct);
+}
+
+public sealed class EmailNotification : Notification
+{
+    public override Task SendAsync(string message, CancellationToken ct)
+    {
+        Console.WriteLine($"Email: {message}");
+        return Task.CompletedTask;
+    }
+}
+
+public sealed class SmsNotification : Notification
+{
+    public override Task SendAsync(string message, CancellationToken ct)
+    {
+        Console.WriteLine($"SMS: {message}");
+        return Task.CompletedTask;
+    }
+}
+
+Notification channel = new SmsNotification();
+await channel.SendAsync("Appointment confirmed", CancellationToken.None);</code></pre>
+<h3>Abstract classes and methods</h3>
+<pre><code>public abstract class Report
+{
+    public string Title { get; init; } = "";
+    public abstract string Generate();
+
+    public void Print()
+        => Console.WriteLine($"{Title}\n{Generate()}");
+}
+
+public sealed class DailyCollectionReport : Report
+{
+    public decimal Total { get; init; }
+    public override string Generate() => $"Collected: {Total:N2}";
+}</code></pre>
+<h3>Interfaces and multiple capabilities</h3>
+<pre><code>public interface IAuditable
+{
+    DateTime CreatedAtUtc { get; }
+}
+
+public interface IArchivable
+{
+    void Archive();
+}
+
+public sealed class PatientDocument : IAuditable, IArchivable
+{
+    public DateTime CreatedAtUtc { get; } = DateTime.UtcNow;
+    public bool IsArchived { get; private set; }
+    public void Archive() => IsArchived = true;
+}</code></pre>
+<p>Use interfaces to describe capabilities and boundaries. A class can implement multiple interfaces, while it can inherit from only one class. Keep interfaces cohesive and avoid creating one interface for every class without a useful substitution or testing boundary.</p>
+<h3>When to choose class, record, struct or interface</h3>
+<ul><li><strong>class:</strong> identity and mutable lifecycle, such as a tracked patient entity.</li><li><strong>record class:</strong> value-like data and equality by contents, such as an API response.</li><li><strong>struct:</strong> small value with value semantics, such as a coordinate or measurement, when profiling and semantics support it.</li><li><strong>interface:</strong> capability/contract boundary, such as <code>IPatientRepository</code>.</li></ul>
+</section></article></main></body></html>
