@@ -9,4 +9,24 @@ public void CalculateTotal_AddsFeeAndTax()
 <section><h2>DTOs make functions testable</h2><p>If a method reads directly from a WebForms control or HTTP request, testing it requires that UI or web context. Map incoming data to a DTO, then call the business method with that DTO. A unit test can construct it directly.</p></section>
 <section><h2>Stubs, fakes and mocks</h2><ul><li>Stub supplies predetermined data or responses.</li><li>Fake is a lightweight working implementation, such as an in-memory repository.</li><li>Mock verifies an interaction when that interaction is part of the contract.</li><li>Do not mock every class; use real domain objects for simple business logic.</li></ul></section>
 <section><h2>Integration and API testing</h2><p>Test API + DI + database, EF Core mappings against SQL Server, stored procedures, transaction rollback, authentication middleware and authorization policies. Use an isolated test database, never production. Verify status codes, validation, authorization, duplicates, pagination, cancellation and failure responses.</p></section>
-<section><h2>HospitalApp test cases</h2><ul><li>Patient validation and duplicate registration.</li><li>Appointment scheduling conflicts and cancellation.</li><li>Invoice totals and payment allocation.</li><li>Repository behavior using fakes in unit tests.</li><li>SQL persistence and stored procedures in integration tests.</li><li>API authorization and invalid request handling.</li></ul></section><nav class="page-nav"><a href="dotnet.html">← Previous: 08 · .NET Internals</a><a href="aspnet.html">Next: 10 · ASP.NET Core →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<section><h2>HospitalApp test cases</h2><ul><li>Patient validation and duplicate registration.</li><li>Appointment scheduling conflicts and cancellation.</li><li>Invoice totals and payment allocation.</li><li>Repository behavior using fakes in unit tests.</li><li>SQL persistence and stored procedures in integration tests.</li><li>API authorization and invalid request handling.</li></ul></section><section><h2>Deep dive: test hospital business rules</h2><p>A unit test verifies a small unit's observable behavior in isolation. A method can call other methods and still be unit-tested when external dependencies are controlled.</p><h3>Test a pure rule</h3><pre><code>public static decimal CalculateBalance(decimal billed, decimal paid)
+    => billed - paid;
+
+[Fact]
+public void Balance_IsChargesMinusPayments()
+{
+    var balance = BillingRules.CalculateBalance(5000m, 3200m);
+    Assert.Equal(1800m, balance);
+}</code></pre><p>Use test names that describe scenario, action and expected result. Cover normal, boundary and invalid cases.</p><h3>Test a service with a fake repository</h3><p>Do not open SQL Server for every unit test. Depend on an interface and supply controlled data to test the service decision rather than the database provider.</p><pre><code>public interface IPatientRepository
+{
+    Task&lt;Patient?&gt; GetByIdAsync(int id, CancellationToken ct);
+}
+public sealed class PatientLookupService(IPatientRepository repository)
+{
+    public async Task&lt;string&gt; GetNameAsync(int id, CancellationToken ct)
+    {
+        var patient = await repository.GetByIdAsync(id, ct);
+        return patient is null ? "Not found" : patient.Name;
+    }
+}</code></pre><h3>Integration and API tests</h3><p>Integration tests verify API routing, DI, EF Core mapping and SQL behavior together. Use a dedicated test database or a provider matching the behavior you need. EF Core InMemory is not a relational SQL Server replacement: it does not validate SQL translation, constraints or transactions accurately.</p><p>API tests verify status codes, validation, authorization and response DTO shape. Keep many fast unit tests, a useful number of integration tests and fewer broad end-to-end tests. Avoid testing private implementation details.</p><h3>Practice task</h3><ol><li>Unit test invoice totals and appointment eligibility.</li><li>Test PatientLookupService with fake repository for found/missing cases.</li><li>Integration-test registration against a test database.</li><li>API-test invalid input, unauthenticated access and successful registration.</li></ol></section>
+<nav class="page-nav"><a href="dotnet.html">← Previous: 08 · .NET Internals</a><a href="aspnet.html">Next: 10 · ASP.NET Core →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
