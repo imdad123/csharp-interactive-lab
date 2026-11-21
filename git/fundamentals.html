@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Core Git Concepts</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">GIT</span><span>Git <strong>Fundamentals</strong></span></a><span class="top-note">Local version control</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">GIT ROADMAP</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">Git Overview</a><a class="nav-link" href="roadmap.html">Roadmap</a><a class="nav-link active" href="fundamentals.html">01 · Core Git</a><a class="nav-link" href="branching.html">02 · Collaboration</a><a class="nav-link" href="advanced.html">03 · Advanced Git</a><a class="nav-link" href="delivery.html">04 · Delivery</a></aside><article class="content"><p class="eyebrow">GIT · MODULE 01</p><h1>Core Git concepts</h1><p class="lead">Git records project history as a sequence of commits. It lets you inspect, compare and restore changes rather than relying on folders named final-final-v3.</p><h2>The three areas to understand</h2><ul><li><strong>Working tree:</strong> files you are currently editing.</li><li><strong>Staging area/index:</strong> the exact changes selected for the next commit.</li><li><strong>Repository:</strong> committed history stored in .git.</li></ul><pre><code>git init
+git status
+git add src/PatientService.cs
+git diff --staged
+git commit -m "feat: add patient registration service"</code></pre><p>Staging is important because one working directory may contain several unrelated edits. Select only the coherent change you intend to record.</p><h2>Inspect history</h2><pre><code>git log --oneline --graph --decorate --all
+git show HEAD
+git diff
+git diff --staged</code></pre><p>Use diff before committing to review what changed. Commit messages should explain intent, not merely say update.</p><h2>Ignore generated and secret files</h2><pre><code># .gitignore
+/vendor/
+/node_modules/
+.env
+*.log
+bin/
+obj/
+.vs/</code></pre><p>Ignore build output and local secrets, but do not ignore source, migrations or lock files needed by the team. If a secret was committed, deleting it in a later commit does not make it safe; rotate it immediately.</p><h2>Hospital HMS workflow example</h2><pre><code>git status
+git add src/Patients/PatientService.cs tests/PatientServiceTests.cs
+git diff --staged
+git commit -m "feat(patient): validate patient registration"</code></pre><p>Keep a commit focused: a patient registration feature should not also contain unrelated CSS formatting and database backup files.</p><h2>Practice task</h2><ol><li>Initialize a repository for a sample HMS.</li><li>Add README, source and tests.</li><li>Create a .gitignore for IDE/build files and local secrets.</li><li>Make two separate commits for two unrelated changes.</li><li>Use log, show and diff to inspect the history.</li></ol></section><nav class="page-nav"><a href="roadmap.html">← Roadmap</a><a href="branching.html">Next: Collaboration →</a></nav><footer>Git track · Core concepts</footer></article></main></body></html>
