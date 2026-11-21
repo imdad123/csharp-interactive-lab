@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Phase 1 — C# Fundamentals practical C# guide with Hospital HMS examples"><title>Phase 1 — C# Fundamentals | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head>
+<body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">C#</span><span>C# <strong>Language Reference</strong></span></a><span class="top-note">C# 14 · .NET 10 · Hospital HMS examples</span></header>
+<main class="shell"><aside class="sidebar"><p class="eyebrow">C# REFERENCE</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="../csharp.html">C# Overview</a><a class="nav-link" href="../roadmap.html">Complete C# Roadmap</a><a class="nav-link active" href="phase-1.html">Phase 1 — Fundamentals</a><a class="nav-link " href="phase-2.html">Phase 2 — OOP</a><a class="nav-link " href="phase-3.html">Phase 3 — Advanced Types</a><a class="nav-link " href="phase-4.html">Phase 4 — Collections</a><a class="nav-link " href="phase-5.html">Phase 5 — LINQ</a><a class="nav-link " href="phase-6.html">Phase 6 — Exceptions & Debugging</a><a class="nav-link " href="phase-7.html">Phase 7 — Delegates & Functional</a><a class="nav-link " href="phase-8.html">Phase 8 — Async & Parallel</a><a class="nav-link" href="../dotnet.html">.NET Platform</a><a class="nav-link" href="../aspnet/index.html">ASP.NET Core (separate track)</a><p class="sidebar-note">Examples use hospital patients, doctors, appointments, invoices and clinical workflows. Snippets are illustrative unless a complete project is shown.</p></aside>
+<article class="content"><p class="eyebrow">PHASE 1 · 27 TOPICS</p><h1>Phase 1 — C# Fundamentals</h1><p class="lead">A reference guide in the exact roadmap order. Each topic explains the purpose, shows C# syntax, and connects the idea to a realistic Hospital Management System scenario.</p>
+<section id="topic-1"><h2>1. Introduction to C# and .NET</h2><p>C# is a statically typed, general-purpose language. .NET supplies the runtime, base libraries, SDK and application frameworks. C# is the language; .NET is the platform that executes and supports applications.</p><pre><code>// Program.cs
+Console.WriteLine("Hospital HMS starting...");</code></pre></section>
+<section id="topic-2"><h2>2. C# compilation and execution process</h2><p>The C# compiler converts source code into Intermediate Language (IL) and metadata in an assembly. The .NET runtime loads it, verifies required metadata, and JIT-compiles methods to native machine code when executed.</p><pre><code>// Build and run
+// dotnet build
+// dotnet run
+Console.WriteLine(typeof(string).Assembly.FullName);</code></pre></section>
+<section id="topic-3"><h2>3. .NET SDK, Runtime and CLR</h2><p>The SDK contains the CLI, compiler and build tools. The runtime executes applications. The CLR manages execution services such as JIT compilation, garbage collection, exceptions and type safety.</p><pre><code>// Inspect installed components in a terminal:
+// dotnet --list-sdks
+// dotnet --list-runtimes
+Console.WriteLine(Environment.Version);</code></pre></section>
+<section id="topic-4"><h2>4. Project structure and .csproj</h2><p>A solution groups projects; a project file declares target framework, compiler settings and dependencies. Source files compile into an assembly. Keep application concerns separated as the solution grows.</p><pre><code>// HospitalApp.Console.csproj
+&lt;Project Sdk="Microsoft.NET.Sdk"&gt;
+  &lt;PropertyGroup&gt;
+    &lt;OutputType&gt;Exe&lt;/OutputType&gt;
+    &lt;TargetFramework&gt;net10.0&lt;/TargetFramework&gt;
+    &lt;Nullable&gt;enable&lt;/Nullable&gt;
+    &lt;ImplicitUsings&gt;enable&lt;/ImplicitUsings&gt;
+  &lt;/PropertyGroup&gt;
+&lt;/Project&gt;</code></pre></section>
+<section id="topic-5"><h2>5. Variables and constants</h2><p>A variable names a storage location whose value can change. Use const for compile-time constants and readonly for values assigned at declaration or in a constructor.</p><pre><code>int patientId = 1205;
+const int MaxAppointmentsPerDay = 40;
+Console.WriteLine(patientId);</code></pre></section>
+<section id="topic-6"><h2>6. Data types</h2><p>Types define the values a variable can hold and the operations available. Common types include int, decimal, double, bool, char, string, DateOnly and DateTimeOffset.</p><pre><code>int age = 32;
+decimal invoiceTotal = 12500.75m;
+bool isAdmitted = true;
+DateOnly dateOfBirth = new(1994, 5, 12);
+string patientName = "Amina";</code></pre></section>
+<section id="topic-7"><h2>7. Value types vs Reference types</h2><p>Value types copy their value on assignment; reference types copy a reference to an object. This changes how mutation and equality behave. Do not reduce the rule to stack versus heap placement.</p><pre><code>int firstAge = 30;
+int copiedAge = firstAge;
+copiedAge++;
+Console.WriteLine(firstAge); // 30
+var first = new Patient("Amina");
+var second = first;
+second.Name = "Sara";
+Console.WriteLine(first.Name); // Sara
+
+public class Patient(string name) { public string Name { get; set; } = name; }</code></pre></section>
+<section id="topic-8"><h2>8. Implicit and explicit type conversion</h2><p>Implicit conversions are considered safe by the language. Explicit conversions require a cast or conversion API because information may be lost or the conversion may fail.</p><pre><code>int count = 12;
+double approximate = count; // implicit
+ double measurement = 12.75;
+int whole = (int)measurement; // explicit; truncates</code></pre></section>
+<section id="topic-9"><h2>9. Type casting</h2><p>Casting tells the compiler to treat a value as another compatible type. Use safe parsing for text input and pattern matching for runtime object types.</p><pre><code>object value = "MR-1205";
+if (value is string mrn)
+    Console.WriteLine(mrn);
+
+string rawAge = "42";
+if (int.TryParse(rawAge, out int age))
+    Console.WriteLine(age);</code></pre></section>
+<section id="topic-10"><h2>10. var, dynamic and object</h2><p>var uses compile-time type inference; it remains statically typed. object is the common base type and requires casting/pattern matching to access a specific type. dynamic defers member binding until runtime.</p><pre><code>var patientCount = 15; // int
+object code = "MR-01";
+if (code is string mrn) Console.WriteLine(mrn);
+dynamic imported = "legacy-system";
+Console.WriteLine(imported.ToUpperInvariant());</code></pre></section>
+<section id="topic-11"><h2>11. Operators</h2><p>Operators perform arithmetic, comparison, logical, null and bitwise operations. Use decimal for financial calculations and parentheses to make business rules unambiguous.</p><pre><code>decimal subtotal = 1000m;
+decimal tax = subtotal * 0.15m;
+decimal total = subtotal + tax;
+bool canBook = total &gt; 0 &amp;&amp; !string.IsNullOrWhiteSpace("Dr. Ali");</code></pre></section>
+<section id="topic-12"><h2>12. Conditional statements</h2><p>if/else expresses branching when a business decision depends on a condition. Keep conditions readable and extract complicated business rules into named methods.</p><pre><code>if (patientAge &lt; 18)
+    Console.WriteLine("Guardian details required");
+else if (patientAge &gt;= 65)
+    Console.WriteLine("Senior patient workflow");
+else
+    Console.WriteLine("Standard registration");</code></pre></section>
+<section id="topic-13"><h2>13. Switch statements and switch expressions</h2><p>A switch statement is useful for multiple imperative branches. A switch expression returns a value and is concise for mapping a known input to an output.</p><pre><code>string category = patientAge switch
+{
+    &lt; 0 =&gt; "Invalid",
+    &lt; 18 =&gt; "Child",
+    &lt; 65 =&gt; "Adult",
+    _ =&gt; "Senior"
+};</code></pre></section>
+<section id="topic-14"><h2>14. Loops (for, while, do-while, foreach)</h2><p>Use for when an index matters, foreach to process each item, while when repetition depends on a condition, and do-while when the body must run at least once.</p><pre><code>for (int i = 0; i &lt; 3; i++) Console.WriteLine(i);
+foreach (string ward in wards) Console.WriteLine(ward);
+while (queueCount &gt; 0) queueCount--;
+do { attempts++; } while (attempts &lt; 1);</code></pre></section>
+<section id="topic-15"><h2>15. Break and Continue</h2><p>break exits the nearest loop or switch. continue skips the rest of the current iteration and proceeds with the next one.</p><pre><code>foreach (var appointment in appointments)
+{
+    if (appointment.IsCancelled) continue;
+    if (appointment.StartsAt &gt; closingTime) break;
+    Console.WriteLine(appointment.PatientName);
+}</code></pre></section>
+<section id="topic-16"><h2>16. Methods and parameters</h2><p>Methods package behavior behind a named contract. Parameters pass input; return values communicate results. Keep methods focused and name them with verbs.</p><pre><code>static decimal CalculateBalance(decimal billed, decimal paid)
+{
+    return billed - paid;
+}
+var balance = CalculateBalance(5000m, 2000m);</code></pre></section>
+<section id="topic-17"><h2>17. Optional and named parameters</h2><p>Optional parameters provide defaults; named arguments improve call-site clarity when a method has several parameters. Optional parameters should generally appear after required parameters.</p><pre><code>static void SearchPatients(string department, int page = 1, int pageSize = 20) { }
+SearchPatients("Cardiology", pageSize: 50, page: 2);</code></pre></section>
+<section id="topic-18"><h2>18. Method overloading</h2><p>Overloads share a method name but differ in parameter count or types. The compiler chooses the best matching signature; return type alone cannot create an overload.</p><pre><code>static decimal CalculateFee(decimal amount) =&gt; amount;
+static decimal CalculateFee(decimal amount, decimal discount) =&gt; amount - discount;
+var finalFee = CalculateFee(1000m, 100m);</code></pre></section>
+<section id="topic-19"><h2>19. Ref, Out and In parameters</h2><p>ref passes an existing variable by reference; out requires the method to assign a value; in passes by readonly reference. Prefer return values unless by-reference semantics are genuinely useful.</p><pre><code>static bool TryGetPatient(int id, out string? name)
+{
+    name = id == 1 ? "Amina" : null;
+    return name is not null;
+}
+if (TryGetPatient(1, out var name)) Console.WriteLine(name);</code></pre></section>
+<section id="topic-20"><h2>20. Local functions</h2><p>A local function is declared inside another method. It can keep a small helper close to the workflow that uses it and can access the containing method's local variables.</p><pre><code>static decimal CalculateInvoice(decimal subtotal)
+{
+    decimal AddTax(decimal value) =&gt; value * 1.15m;
+    return AddTax(subtotal);
+}</code></pre></section>
+<section id="topic-21"><h2>21. Expression-bodied members</h2><p>Expression-bodied members use => for a single expression. They reduce ceremony but should not obscure validation or multi-step behavior.</p><pre><code>public sealed class Invoice(decimal subtotal, decimal tax)
+{
+    public decimal Subtotal { get; } = subtotal;
+    public decimal Total =&gt; Subtotal + tax;
+}</code></pre></section>
+<section id="topic-22"><h2>22. String manipulation</h2><p>Strings are immutable. Common operations include Trim, Replace, Split, Contains, StartsWith and string comparison options. Normalize identifiers consistently.</p><pre><code>string mrn = "  mr-1205 ".Trim().ToUpperInvariant();
+string[] parts = "Cardiology,Emergency".Split(',');
+bool validPrefix = mrn.StartsWith("MR-", StringComparison.Ordinal);</code></pre></section>
+<section id="topic-23"><h2>23. String interpolation</h2><p>Interpolation inserts expressions into a string using $"...". Use format specifiers for dates, numbers and currency.</p><pre><code>string patient = "Amina";
+decimal balance = 1250.5m;
+string message = $"Patient {patient} has balance {balance:N2}";</code></pre></section>
+<section id="topic-24"><h2>24. StringBuilder</h2><p>StringBuilder is useful when repeatedly appending text in loops. For a few concatenations, normal interpolation is usually simpler.</p><pre><code>var report = new System.Text.StringBuilder();
+foreach (var row in invoiceLines)
+    report.AppendLine($"{row.Description}: {row.Amount:N2}");
+string text = report.ToString();</code></pre></section>
+<section id="topic-25"><h2>25. Nullable value types</h2><p>A nullable value type represents either a value or null. It is written T? for value types such as int? or DateOnly?.</p><pre><code>int? assignedDoctorId = null;
+if (assignedDoctorId.HasValue)
+    Console.WriteLine(assignedDoctorId.Value);
+DateOnly? dischargeDate = null;</code></pre></section>
+<section id="topic-26"><h2>26. Null handling and null-coalescing operators</h2><p>Use ?. for conditional access, ?? for fallback values and ??= to assign only when null. Null checks should reflect the real domain contract.</p><pre><code>string? phone = patient.Phone;
+string displayPhone = phone ?? "Not provided";
+int length = phone?.Length ?? 0;
+patient.Phone ??= "Pending";</code></pre></section>
+<section id="topic-27"><h2>27. Scope and lifetime of variables</h2><p>A variable's scope determines where it can be accessed. Lifetime describes how long its storage/value remains relevant. Local variables, fields, static fields and captured variables have different lifetimes.</p><pre><code>static int registrationsToday;
+void Register()
+{
+    int localCount = 1; // local scope
+    registrationsToday++; // static field shared by type
+}</code></pre></section>
+<nav class="page-nav"><a href="../csharp.html">← C# overview</a><a href="phase-2.html">Next phase →</a></nav><footer>Programming Academy · Static reference documentation · C# 14 / .NET 10</footer></article></main></body></html>
