@@ -32,4 +32,145 @@ var activeNames = patients.Where(p => p.IsActive)
     .OrderBy(p => p.Name).Select(p => p.Name).ToList();</code></pre><p>Where filters, OrderBy sorts and Select projects. This resembles SQL WHERE, ORDER BY and SELECT.</p><h3>Deferred execution and IQueryable</h3><p>Many LINQ-to-Objects queries execute when enumerated; ToList materializes them. IQueryable builds an expression a provider such as EF Core may translate to SQL. Avoid materializing too early, or you may pull every patient into memory before filtering.</p><pre><code>var result = await db.Patients.Where(p => p.IsActive)
     .Select(p => new PatientListItem(p.Id, p.Name))
     .ToListAsync();</code></pre><h3>Practice task</h3><ol><li>Store sample patients in a List.</li><li>Build a Dictionary keyed by patient ID.</li><li>Remove duplicate IDs with HashSet.</li><li>Write LINQ queries for active patients, name search and counts by status.</li><li>Compare in-memory LINQ with EF Core IQueryable.</li></ol></section>
-<nav class="page-nav"><a href="csharp-01.html">← Previous: 01 · C# Fundamentals</a><a href="csharp-03.html">Next: 03 · OOP →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<nav class="page-nav"><a href="csharp-01.html">← Previous: 01 · C# Fundamentals</a><a href="csharp-03.html">Next: 03 · OOP →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer><section><h2>Worked examples: collections and LINQ</h2>
+<p>The examples below use this small model. Run the snippets in a console project and compare the output.</p>
+<pre><code>public sealed record Patient(int Id, string Name, int Age, string Department, decimal Balance);
+
+List&lt;Patient&gt; patients =
+[
+    new(1, "Amina", 30, "Cardiology", 250m),
+    new(2, "Bilal", 17, "Pediatrics", 0m),
+    new(3, "Sara", 45, "Cardiology", 500m),
+    new(4, "Hamza", 62, "Emergency", 125m),
+    new(5, "Noor", 28, "Pediatrics", 0m)
+];</code></pre>
+<h3>List operations: add, update, remove and search</h3>
+<pre><code>var waitingList = new List&lt;string&gt; { "Amina", "Bilal" };
+waitingList.Add("Sara");
+waitingList.Insert(1, "Noor");
+waitingList[0] = "Amina Khan";
+
+bool exists = waitingList.Contains("Sara");
+int index = waitingList.FindIndex(name => name.StartsWith("N"));
+waitingList.Remove("Bilal");
+waitingList.RemoveAll(name => name.Length < 4);
+
+Console.WriteLine($"Contains Sara: {exists}; Noor index: {index}");</code></pre>
+<h3>Dictionary: lookup and safe insertion</h3>
+<pre><code>var patientIndex = patients.ToDictionary(p => p.Id);
+
+if (patientIndex.TryGetValue(3, out Patient? patient))
+    Console.WriteLine(patient.Name);
+
+if (!patientIndex.TryAdd(6, new Patient(6, "Zain", 35, "Surgery", 0m)))
+    Console.WriteLine("Patient ID already exists.");</code></pre>
+<h3>HashSet: prevent duplicate medical record numbers</h3>
+<pre><code>var mrns = new HashSet&lt;string&gt;(StringComparer.OrdinalIgnoreCase);
+string[] imported = ["MR-100", "mr-100", "MR-101"];
+
+foreach (string mrn in imported)
+{
+    if (!mrns.Add(mrn))
+        Console.WriteLine($"Duplicate MRN rejected: {mrn}");
+}</code></pre>
+<h3>Queue and Stack: FIFO versus LIFO</h3>
+<pre><code>var reception = new Queue&lt;Patient&gt;();
+foreach (Patient p in patients) reception.Enqueue(p);
+
+Patient next = reception.Dequeue(); // first registered is called first
+
+var undoHistory = new Stack&lt;string&gt;();
+undoHistory.Push("Created invoice");
+undoHistory.Push("Added laboratory charge");
+string lastAction = undoHistory.Pop(); // most recent action first</code></pre>
+<h3>LINQ Where and Select</h3>
+<pre><code>var adultNames = patients
+    .Where(p => p.Age >= 18)
+    .Select(p => p.Name)
+    .ToList();
+
+foreach (string name in adultNames)
+    Console.WriteLine(name);</code></pre>
+<h3>FirstOrDefault and null handling</h3>
+<pre><code>Patient? patientWithId3 = patients.FirstOrDefault(p => p.Id == 3);
+Patient? missing = patients.FirstOrDefault(p => p.Id == 999);
+
+Console.WriteLine(patientWithId3?.Name ?? "Not found");
+Console.WriteLine(missing is null ? "No matching patient" : missing.Name);</code></pre>
+<p>Use <code>First</code> when absence is an error and you want an exception. Use <code>FirstOrDefault</code> when no match is a normal possibility. Use <code>Single</code> when the data contract requires exactly one match; it detects duplicates.</p>
+<h3>Any, All, Count and aggregates</h3>
+<pre><code>bool hasEmergencyPatient = patients.Any(p => p.Department == "Emergency");
+bool allHaveNames = patients.All(p => !string.IsNullOrWhiteSpace(p.Name));
+int cardiologyCount = patients.Count(p => p.Department == "Cardiology");
+decimal totalBalance = patients.Sum(p => p.Balance);
+decimal averageAge = patients.Average(p => p.Age);
+int oldestAge = patients.Max(p => p.Age);</code></pre>
+<h3>OrderBy and ThenBy</h3>
+<pre><code>var ordered = patients
+    .OrderBy(p => p.Department)
+    .ThenBy(p => p.Name)
+    .ToList();
+
+foreach (Patient p in ordered)
+    Console.WriteLine($"{p.Department}: {p.Name}");</code></pre>
+<h3>GroupBy for department reporting</h3>
+<pre><code>var report = patients
+    .GroupBy(p => p.Department)
+    .Select(group => new
+    {
+        Department = group.Key,
+        PatientCount = group.Count(),
+        Outstanding = group.Sum(p => p.Balance)
+    })
+    .OrderByDescending(row => row.PatientCount);
+
+foreach (var row in report)
+    Console.WriteLine($"{row.Department}: {row.PatientCount}, balance {row.Outstanding}");</code></pre>
+<h3>Deferred execution and materialization</h3>
+<pre><code>var outstandingQuery = patients.Where(p => p.Balance > 0); // not executed yet
+patients.Add(new Patient(6, "Zain", 35, "Surgery", 300m));
+
+foreach (Patient p in outstandingQuery)
+    Console.WriteLine(p.Name); // includes Zain
+
+var snapshot = outstandingQuery.ToList(); // executes and stores results now</code></pre>
+<p>LINQ-to-Objects queries are often deferred until enumeration. Calling <code>ToList</code>, <code>ToArray</code>, <code>Count</code> or an aggregate usually executes the query. Be deliberate about repeated enumeration and snapshot requirements.</p>
+<h3>IEnumerable versus IQueryable</h3>
+<pre><code>// In-memory sequence: filtering runs in .NET after data is already loaded.
+IEnumerable&lt;Patient&gt; inMemory = patients;
+var localResult = inMemory.Where(p => p.Age >= 18);
+
+// EF Core query: expression can be translated into SQL by the provider.
+IQueryable&lt;Patient&gt; databaseQuery = db.Patients;
+var serverQuery = databaseQuery.Where(p => p.Age >= 18);
+var rows = await serverQuery
+    .Select(p => new PatientListItem(p.Id, p.Name))
+    .ToListAsync(cancellationToken);</code></pre>
+<p>Do not call <code>AsEnumerable</code> or <code>ToList</code> too early on a large database query. Keep filters, projections, sorting and pagination in SQL where possible. <code>IQueryable</code> depends on a provider and not every .NET method can be translated.</p>
+<h3>Method syntax and query syntax</h3>
+<pre><code>var methodSyntax = patients
+    .Where(p => p.Age >= 18)
+    .OrderBy(p => p.Name)
+    .Select(p => p.Name);
+
+var querySyntax =
+    from p in patients
+    where p.Age >= 18
+    orderby p.Name
+    select p.Name;</code></pre>
+<p>Both compile to LINQ query operations. Method syntax is common for fluent pipelines; query syntax can be clearer for joins and grouped queries.</p>
+<h3>Join patients to appointments</h3>
+<pre><code>var appointments = new[]
+{
+    new { PatientId = 1, Doctor = "Dr. Ali" },
+    new { PatientId = 1, Doctor = "Dr. Sara" },
+    new { PatientId = 3, Doctor = "Dr. Hamza" }
+};
+
+var schedule = from p in patients
+               join a in appointments on p.Id equals a.PatientId
+               select new { p.Name, a.Doctor };
+
+foreach (var item in schedule)
+    Console.WriteLine($"{item.Name} -> {item.Doctor}");</code></pre>
+</section></article></main></body></html>
