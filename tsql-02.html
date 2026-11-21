@@ -15,4 +15,19 @@ HAVING COUNT(*) &gt;= 10;</code></pre></section>
            PARTITION BY DoctorId
            ORDER BY AppointmentDate DESC) AS RowNum
 FROM dbo.Appointments;</code></pre></section>
-<section><h2>HospitalApp reporting practice</h2><ul><li>Doctor-wise appointment counts by date range.</li><li>Latest appointment per patient using ROW_NUMBER.</li><li>Daily cash and bank collection with conditional aggregation.</li><li>Running daily revenue using SUM() OVER.</li><li>Outstanding invoice aging grouped by patient or department.</li></ul></section><nav class="page-nav"><a href="tsql-01.html">← Previous: 12 · SQL Foundations</a><a href="tsql-03.html">Next: 14 · T-SQL Programming →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<section><h2>HospitalApp reporting practice</h2><ul><li>Doctor-wise appointment counts by date range.</li><li>Latest appointment per patient using ROW_NUMBER.</li><li>Daily cash and bank collection with conditional aggregation.</li><li>Running daily revenue using SUM() OVER.</li><li>Outstanding invoice aging grouped by patient or department.</li></ul></section><section><h2>Deep dive: reporting queries for hospital operations</h2><h3>JOIN related facts</h3><pre><code>SELECT a.AppointmentId, p.MedicalRecordNo, p.PatientName, a.ScheduledAt, a.Status
+FROM dbo.Appointments a INNER JOIN dbo.Patients p ON p.PatientId=a.PatientId;</code></pre><p>INNER JOIN returns matching pairs. LEFT JOIN retains all left rows even without a match. A WHERE filter on the right table can accidentally turn LEFT JOIN behavior into INNER JOIN.</p><h3>Aggregation and HAVING</h3><pre><code>SELECT CAST(ScheduledAt AS date) AS AppointmentDate, COUNT(*) AS Total
+FROM dbo.Appointments GROUP BY CAST(ScheduledAt AS date)
+HAVING COUNT(*) >= 10 ORDER BY AppointmentDate;</code></pre><p>WHERE filters rows before grouping; HAVING filters groups. COUNT(column) ignores NULL; COUNT(*) counts rows.</p><h3>EXISTS and CTE</h3><pre><code>SELECT p.PatientId, p.PatientName FROM dbo.Patients p
+WHERE EXISTS (SELECT 1 FROM dbo.Appointments a WHERE a.PatientId=p.PatientId);
+WITH Monthly AS
+(
+ SELECT PatientId, COUNT(*) AS VisitCount FROM dbo.Appointments
+ WHERE ScheduledAt >= '2026-11-01' AND ScheduledAt < '2026-12-01'
+ GROUP BY PatientId
+)
+SELECT p.PatientName, m.VisitCount FROM Monthly m
+JOIN dbo.Patients p ON p.PatientId=m.PatientId;</code></pre><p>EXISTS tests whether related rows exist. A CTE names a query expression for readability; it is not automatically materialized.</p><h3>Window functions</h3><pre><code>SELECT PatientId, AppointmentId, ScheduledAt,
+ ROW_NUMBER() OVER(PARTITION BY PatientId ORDER BY ScheduledAt DESC) AS VisitRank,
+ COUNT(*) OVER(PARTITION BY PatientId) AS TotalVisits
+FROM dbo.Appointments;</code></pre><p>GROUP BY collapses groups; window functions calculate across related rows while preserving detail. Use ROW_NUMBER for latest visit per patient or SUM OVER for running totals.</p><h3>Practice task</h3><ol><li>Daily appointments by status.</li><li>Patients with no appointments via LEFT JOIN or NOT EXISTS.</li><li>Top five doctors by appointment count.</li><li>Latest appointment per patient with ROW_NUMBER.</li><li>Monthly revenue by department excluding cancelled invoices.</li></ol></section><nav class="page-nav"><a href="tsql-01.html">← Previous: 12 · SQL Foundations</a><a href="tsql-03.html">Next: 14 · T-SQL Programming →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
