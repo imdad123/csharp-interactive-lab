@@ -1,0 +1,37 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASP.NET Core prerequisites and .NET foundations | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">API</span><span>ASP.NET Core <strong>Backend Reference</strong></span></a><span class="top-note">ASP.NET Core · Hospital HMS</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">ASP.NET CORE</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="../csharp.html">C# Language</a><a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="roadmap.html">Complete roadmap</a><a class="nav-link active" href="guide-prerequisites.html">Prerequisites</a><a class="nav-link " href="guide-web.html">Web fundamentals</a><a class="nav-link " href="guide-data.html">Data and ORM</a><a class="nav-link " href="guide-platform.html">DI, logging, cloud</a><a class="nav-link " href="guide-communication.html">API and real-time</a><a class="nav-link " href="guide-workers.html">Background and messaging</a><a class="nav-link " href="guide-testing.html">Testing and CI/CD</a><a class="nav-link " href="guide-architecture.html">Architecture and ecosystem</a><a class="nav-link" href="../sql/index.html">SQL & Databases</a><a class="nav-link" href="../engineering/cicd.html">CI/CD & Cloud</a></aside><article class="content"><p class="eyebrow">DETAILED REFERENCE GUIDE</p><h1>ASP.NET Core prerequisites and .NET foundations</h1><p class="lead">Concept, purpose, code examples and production considerations with hospital application scenarios.</p><section><h2>ASP.NET Core host and Kestrel</h2><p>The host owns application startup, DI, configuration, logging and graceful shutdown. Kestrel is the cross-platform HTTP server.</p><pre><code>var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddControllers();
+var app = builder.Build();
+app.MapControllers();
+app.Run();</code></pre></section>,<section><h2>.NET CLI, solution and project</h2><p>The CLI creates, restores, builds, tests and publishes projects. A solution groups API, application, domain, infrastructure and test projects.</p><pre><code>dotnet new sln -n Hospital
+dotnet new webapi -n Hospital.Api
+dotnet new classlib -n Hospital.Application
+dotnet sln add Hospital.Api/Hospital.Api.csproj
+dotnet add Hospital.Api reference Hospital.Application
+dotnet restore
+dotnet build</code></pre></section>,<section><h2>StyleCop and code quality</h2><p>Style analyzers standardize naming, formatting and documentation. Apply a shared ruleset/editorconfig and run formatting checks in CI.</p><pre><code>dotnet add package StyleCop.Analyzers
+dotnet format --verify-no-changes</code></pre></section>,<section><h2>Git, GitHub, GitLab and Bitbucket</h2><p>Git records source history; hosted platforms add pull requests, review, permissions, branch protection and CI. Keep application secrets out of repository history.</p><pre><code>git switch -c feature/patient-search
+git add .
+git commit -m "Add patient search"
+git push -u origin feature/patient-search</code></pre></section>,<section><h2>HTTP and HTTPS</h2><p>Understand methods, status codes, headers, cookies, content types, caching and TLS. HTTPS protects credentials and data in transit; it does not replace authorization.</p><pre><code>GET /api/patients/1205 HTTP/1.1
+Host: hospital.example
+Accept: application/json
+
+HTTP/1.1 200 OK
+Content-Type: application/json</code></pre></section>,<section><h2>Data structures and algorithms</h2><p>Backend request performance depends on appropriate data structures. Use dictionaries for keyed lookup, sets for uniqueness and queues for FIFO work.</p><pre><code>var patientsById = patients.ToDictionary(p =&gt; p.Id); // expected O(1)
+if (patientsById.TryGetValue(id, out var patient)) return patient;</code></pre></section>,<section><h2>SQL and database design</h2><p>Design relational tables with primary keys, foreign keys, unique constraints, indexes and normalized relationships.</p><pre><code>CREATE TABLE Patients (
+ PatientId int IDENTITY PRIMARY KEY,
+ MRN varchar(30) NOT NULL UNIQUE,
+ FullName nvarchar(150) NOT NULL
+);
+CREATE TABLE Appointments (
+ AppointmentId int IDENTITY PRIMARY KEY,
+ PatientId int NOT NULL REFERENCES Patients(PatientId),
+ StartsAt datetime2 NOT NULL
+);</code></pre></section>,<section><h2>Stored procedures, constraints and triggers</h2><p>Stored procedures encapsulate SQL operations; constraints protect integrity; triggers run implicitly after database events. Prefer explicit constraints for invariants and use triggers only when justified.</p><pre><code>CREATE PROCEDURE dbo.GetPatient @PatientId int
+AS
+BEGIN
+ SET NOCOUNT ON;
+ SELECT PatientId, MRN, FullName FROM dbo.Patients WHERE PatientId=@PatientId;
+END;
+GO
+ALTER TABLE Patients ADD CONSTRAINT UQ_Patients_MRN UNIQUE(MRN);</code></pre></section><footer>Programming Academy · ASP.NET Core reference</footer></article></main></body></html>
