@@ -14,4 +14,20 @@ await File.WriteAllTextAsync(path, json, cancellationToken);
 string loaded = await File.ReadAllTextAsync(path, cancellationToken);
 Patient? restored = JsonSerializer.Deserialize&lt;Patient&gt;(loaded);</code></pre></section>
 <section><h2>Resource management</h2><p>Files, streams, sockets and database connections can hold operating-system resources. IDisposable and using provide deterministic cleanup; IAsyncDisposable and await using support asynchronous cleanup. Garbage collection does not replace resource disposal.</p></section>
-<section><h2>HospitalApp practice</h2><ul><li>Validate patient details before saving.</li><li>Represent missing patients as a defined outcome.</li><li>Practice a JSON export/import exercise before database persistence.</li><li>Dispose streams and connections correctly.</li></ul></section><nav class="page-nav"><a href="csharp-04.html">← Previous: 04 · Generics & Design</a><a href="csharp-06.html">Next: 06 · Modern C# →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<section><h2>HospitalApp practice</h2><ul><li>Validate patient details before saving.</li><li>Represent missing patients as a defined outcome.</li><li>Practice a JSON export/import exercise before database persistence.</li><li>Dispose streams and connections correctly.</li></ul></section><section><h2>Deep dive: exceptions, validation, files and resource safety</h2><h3>Validation is not an exception</h3><p>An invalid phone number is an expected input outcome: return validation errors. A database outage or corrupted configuration is exceptional and should be handled at a boundary with logging.</p><h3>Throw near the violated rule; catch where recovery is possible</h3><pre><code>public static decimal Balance(decimal charges, decimal payments)
+{
+    if (charges < 0) throw new ArgumentOutOfRangeException(nameof(charges));
+    if (payments < 0) throw new ArgumentOutOfRangeException(nameof(payments));
+    return charges - payments;
+}
+try { Console.WriteLine(Balance(5000m, 2000m)); }
+catch (ArgumentOutOfRangeException ex)
+{ Console.WriteLine($"Invalid financial input: {ex.Message}"); }</code></pre><p>Do not wrap every line in try/catch. Catch only when you can recover, translate the error or add context and rethrow. Use throw; to preserve the stack, not throw ex;.</p><h3>Files and serialization</h3><p>Use structured formats such as JSON for exports instead of fragile custom text formats.</p><pre><code>using System.Text.Json;
+var export = new PatientExport(101, "Amina Khan");
+string json = JsonSerializer.Serialize(export);
+await File.WriteAllTextAsync("patient-export.json", json);
+string loaded = await File.ReadAllTextAsync("patient-export.json");
+PatientExport? restored = JsonSerializer.Deserialize&lt;PatientExport&gt;(loaded);</code></pre><p>Do not export sensitive patient data to uncontrolled folders. Apply access control, encryption and retention policies.</p><h3>Dispose external resources</h3><p>Files, streams and database connections hold external resources. using/await using guarantees disposal even when an exception occurs.</p><pre><code>await using var stream = new FileStream("report.txt", FileMode.Create);
+await using var writer = new StreamWriter(stream);
+await writer.WriteLineAsync("Daily appointment report");</code></pre><p>Never keep a database connection open while waiting for a user to type. Dispose ADO.NET connections and commands deterministically.</p><h3>Practice task</h3><ol><li>Validate patient data with clear messages.</li><li>Throw for impossible internal states.</li><li>Export a sample patient list to JSON.</li><li>Handle missing-file and permission failures at the UI boundary.</li><li>Ensure streams and database objects are disposed.</li></ol></section>
+<nav class="page-nav"><a href="csharp-04.html">← Previous: 04 · Generics & Design</a><a href="csharp-06.html">Next: 06 · Modern C# →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
