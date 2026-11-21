@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASP.NET Core EF Core & Data Access | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">API</span><span>ASP.NET Core <strong>Data Access</strong></span></a><span class="top-note">EF Core · SQL Server</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">ASP.NET CORE</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="../csharp.html">C# Language</a><a class="nav-link" href="index.html">ASP.NET Core Overview</a><a class="nav-link" href="roadmap.html">ASP.NET Core Roadmap</a><a class="nav-link" href="fundamentals.html">Hosting & Fundamentals</a><a class="nav-link" href="apis.html">HTTP APIs, REST & MVC</a><a class="nav-link" href="middleware.html">Middleware, Filters & Config</a><a class="nav-link active" href="data.html">EF Core & Data Access</a><a class="nav-link" href="di-caching-logging.html">DI, Caching & Logging</a><a class="nav-link" href="realtime-background.html">Real-time & Background Jobs</a><a class="nav-link" href="testing-deployment.html">Testing & Deployment</a></aside><article class="content"><p class="eyebrow">TOPIC GUIDE</p><h1>Entity Framework Core and data access</h1><p class="lead">EF Core is an object-relational mapper. It maps .NET entity objects to relational tables and translates LINQ queries into database commands. It does not remove the need to understand SQL, indexes, transactions and database design.</p>
+<section><h2>1. Define entities and relationships</h2><pre><code>public sealed class Patient
+{
+    public int Id { get; set; }
+    public required string MedicalRecordNumber { get; set; }
+    public required string FullName { get; set; }
+    public DateOnly DateOfBirth { get; set; }
+
+    public List&lt;Appointment&gt; Appointments { get; set; } = [];
+}
+
+public sealed class Appointment
+{
+    public int Id { get; set; }
+    public int PatientId { get; set; }
+    public DateTime StartsAtUtc { get; set; }
+    public string Status { get; set; } = "Booked";
+
+    public Patient Patient { get; set; } = null!;
+}</code></pre><p>Patient has many appointments. The foreign key is <code>Appointment.PatientId</code>. For larger systems, define lengths, precision, required columns, indexes and delete behavior explicitly.</p></section>
+<section><h2>2. DbContext and configuration</h2><pre><code>using Microsoft.EntityFrameworkCore;
+
+public sealed class HospitalDbContext(DbContextOptions&lt;HospitalDbContext&gt; options)
+    : DbContext(options)
+{
+    public DbSet&lt;Patient&gt; Patients =&gt; Set&lt;Patient&gt;();
+    public DbSet&lt;Appointment&gt; Appointments =&gt; Set&lt;Appointment&gt;();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity&lt;Patient&gt;()
+            .HasIndex(p => p.MedicalRecordNumber)
+            .IsUnique();
+
+        modelBuilder.Entity&lt;Patient&gt;()
+            .Property(p => p.FullName)
+            .HasMaxLength(150)
+            .IsRequired();
+
+        modelBuilder.Entity&lt;Appointment&gt;()
+            .HasOne(a => a.Patient)
+            .WithMany(p => p.Appointments)
+            .HasForeignKey(a => a.PatientId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+// Program.cs
+builder.Services.AddDbContext&lt;HospitalDbContext&gt;(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("HospitalDb")));</code></pre></section>
+<section><h2>3. Code First migrations</h2><pre><code>dotnet tool install --global dotnet-ef
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+dotnet add package Microsoft.EntityFrameworkCore.Design
+
+dotnet ef migrations add InitialHospitalSchema
+dotnet ef database update</code></pre><p>Review generated migration SQL and test migrations against a disposable database before production. Keep migrations in source control. Do not treat automatic migration on every production startup as a universal deployment strategy.</p></section>
+<section><h2>4. Create and query records asynchronously</h2><pre><code>public sealed class PatientService(HospitalDbContext db)
+{
+    public async Task&lt;int&gt; RegisterAsync(
+        string mrn,
+        string fullName,
+        DateOnly dateOfBirth,
+        CancellationToken cancellationToken)
+    {
+        var patient = new Patient
+        {
+            MedicalRecordNumber = mrn,
+            FullName = fullName.Trim(),
+            DateOfBirth = dateOfBirth
+        };
+
+        db.Patients.Add(patient);
+        await db.SaveChangesAsync(cancellationToken);
+        return patient.Id;
+    }
+
+    public Task&lt;Patient?&gt; FindByMrnAsync(
+        string mrn,
+        CancellationToken cancellationToken)
+    {
+        return db.Patients
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                p => p.MedicalRecordNumber == mrn,
+                cancellationToken);
+    }
+}</code></pre><p>Use async database APIs in web requests so threads are not blocked while waiting for I/O. Pass cancellation tokens through to database operations.</p></section>
+<section><h2>5. Change tracking and AsNoTracking</h2><pre><code>// Tracked query: edit entity and save changes.
+var patient = await db.Patients
+    .SingleAsync(p => p.Id == id, cancellationToken);
+
+patient.FullName = "Amina Khan";
+await db.SaveChangesAsync(cancellationToken);
+
+// Read-only query: avoid tracking overhead.
+var rows = await db.Patients
+    .AsNoTracking()
+    .OrderBy(p => p.FullName)
+    .Select(p => new PatientListItem(p.Id, p.FullName))
+    .ToListAsync(cancellationToken);</code></pre><p>Tracking is useful when changes will be saved through the same context. No-tracking is often appropriate for read-only endpoints. Project to DTOs to avoid loading unnecessary columns and entity graphs.</p></section>
+<section><h2>6. Eager, explicit and lazy loading</h2><pre><code>// Eager loading: fetch related appointments in the query.
+var patient = await db.Patients
+    .Include(p => p.Appointments)
+    .SingleOrDefaultAsync(p => p.Id == id, cancellationToken);
+
+// Explicit loading: load relationship after fetching patient.
+if (patient is not null)
+{
+    await db.Entry(patient)
+        .Collection(p => p.Appointments)
+        .LoadAsync(cancellationToken);
+}</code></pre><p>Lazy loading loads navigation properties when accessed and can hide database round trips, causing N+1 query problems. Prefer deliberate projections or eager loading for API responses. Use lazy loading only when its behavior is understood and measured.</p></section>
+<section><h2>7. Transactions</h2><pre><code>await using var transaction =
+    await db.Database.BeginTransactionAsync(cancellationToken);
+
+try
+{
+    db.Patients.Add(patient);
+    await db.SaveChangesAsync(cancellationToken);
+
+    db.Appointments.Add(appointment);
+    await db.SaveChangesAsync(cancellationToken);
+
+    await transaction.CommitAsync(cancellationToken);
+}
+catch
+{
+    await transaction.RollbackAsync(cancellationToken);
+    throw;
+}</code></pre><p>Use a transaction when multiple database operations must succeed or fail together. EF Core automatically wraps a single SaveChanges call in a transaction when the provider supports it. Do not keep transactions open during slow external network calls.</p></section>
+<section><h2>8. Raw SQL, stored procedures and alternatives</h2><p>EF Core is not the only data-access choice. Dapper, RepoDB and ADO.NET can be appropriate for focused high-performance queries, legacy stored procedures or bulk operations. Parameterize all SQL; never concatenate user input into SQL text.</p><pre><code>var patient = await db.Patients
+    .FromSqlInterpolated(
+        $"SELECT * FROM dbo.Patients WHERE MedicalRecordNumber = {mrn}")
+    .AsNoTracking()
+    .SingleOrDefaultAsync(cancellationToken);</code></pre><p><code>FromSqlInterpolated</code> parameterizes interpolated values. Do not use raw SQL interpolation APIs that treat user input as SQL syntax.</p></section>
+<section><h2>Practice</h2><ol><li>Model Patient, Doctor and Appointment with foreign keys.</li><li>Add a unique index for MRN and an index for appointment start time.</li><li>Create and review a migration.</li><li>Implement paginated patient search using projection and AsNoTracking.</li><li>Write an integration test against SQL Server or a disposable relational test database.</li></ol></section>
+<nav class="page-nav"><a href="middleware.html">← Middleware & Config</a><a href="di-caching-logging.html">Next: DI, Caching & Logging →</a></nav><footer>ASP.NET Core · EF Core and persistence</footer></article></main></body></html>
