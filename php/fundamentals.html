@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PHP Fundamentals</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">PHP</span><span>PHP <strong>Fundamentals</strong></span></a><span class="top-note">PHP 8+ · Strong foundations</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">PHP ROADMAP</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">PHP Overview</a><a class="nav-link" href="roadmap.html">Roadmap</a><a class="nav-link active" href="fundamentals.html">01 · Fundamentals</a><a class="nav-link" href="oop.html">02 · OOP</a><a class="nav-link" href="database.html">03 · Database</a><a class="nav-link" href="web-api.html">04 · Web & APIs</a><a class="nav-link" href="security-testing.html">05 · Security & Testing</a></aside><article class="content"><p class="eyebrow">PHP · MODULE 01</p><h1>PHP fundamentals</h1><p class="lead">Understand what PHP does in a web request and learn the language features that power hospital workflows.</p><section><h2>Why PHP exists in a web application</h2><p>A browser cannot directly execute PHP source code. The web server runs PHP on the server, PHP can validate input and access data, and the server returns HTML or JSON to the client. Never send secrets or database credentials to the browser.</p><h2>Types and strictness</h2><p>PHP is dynamically typed, but modern PHP supports scalar type declarations, return types and strict_types. Use explicit types in application code to make contracts easier to reason about.</p><pre><code>&lt;?php
+declare(strict_types=1);
+
+function calculateConsultationTotal(float $fee, float $discount): float
+{
+    if ($fee < 0 || $discount < 0 || $discount > $fee) {
+        throw new InvalidArgumentException('Invalid fee or discount');
+    }
+    return $fee - $discount;
+}
+
+echo calculateConsultationTotal(1800.00, 100.00);</code></pre><p>For real financial accounting, prefer integer minor units or a decimal-safe money strategy rather than assuming binary floating-point is exact.</p><h2>Arrays and associative records</h2><pre><code>$patient = [
+    'id' => 1205,
+    'mrn' => 'MR-2026-001205',
+    'name' => 'Amina Khan',
+    'active' => true,
+];
+
+$appointments = [];
+$appointments[] = ['patient_id' => 1205, 'status' => 'Booked'];</code></pre><p>Associative arrays are convenient for request data and simple structures. As the application grows, use DTOs/value objects and domain classes to avoid unstructured arrays spreading through every layer.</p><h2>Forms and validation</h2><pre><code>$name = trim($_POST['name'] ?? '');
+$ageInput = $_POST['age'] ?? null;
+$age = filter_var($ageInput, FILTER_VALIDATE_INT);
+
+$errors = [];
+if ($name === '') $errors['name'] = 'Patient name is required';
+if ($age === false || $age < 0 || $age > 125) {
+    $errors['age'] = 'Enter a valid age';
+}</code></pre><p>Input from forms, query strings, headers and APIs is untrusted. Validate according to business meaning. Escape output for the context where it is rendered; validation alone does not prevent XSS.</p><h2>Functions and separation of concerns</h2><p>Keep pure business calculations separate from superglobals, HTML and SQL. A function should receive the values it needs and return a result. This makes it reusable in web requests, CLI commands and tests.</p><h2>Practice task</h2><ol><li>Create a patient registration form.</li><li>Validate name, age, phone and date of birth on the server.</li><li>Generate an MRN through a dedicated service—not from a user-editable field.</li><li>Show field-level errors and preserve safe form values.</li><li>Write tests for the validation and fee-calculation functions.</li></ol></section><nav class="page-nav"><a href="roadmap.html">← Roadmap</a><a href="oop.html">Next: OOP →</a></nav><footer>PHP track · Fundamentals</footer></article></main></body></html>
