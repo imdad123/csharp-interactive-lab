@@ -12,4 +12,24 @@ if (patientsById.TryGetValue(101, out var found))
     .Select(a =&gt; new { a.PatientName, a.StartTime })
     .ToList();</code></pre></section>
 <section><h2>Deferred execution and IQueryable</h2><p>Many LINQ operations build a query that runs when enumerated. ToList and ToArray materialize results immediately. IEnumerable generally represents in-memory iteration; IQueryable allows a provider such as EF Core to translate expression trees into SQL. Avoid repeated enumeration, premature materialization and loading entire tables.</p></section>
-<section><h2>HospitalApp practice</h2><ol><li>Store patients in List&lt;Patient&gt; and index by ID in Dictionary.</li><li>Find appointments by doctor, date and status.</li><li>Group appointments by doctor and calculate visit counts.</li><li>Project report results into DTOs instead of returning full entities.</li></ol></section><nav class="page-nav"><a href="csharp-01.html">← Previous: 01 · C# Fundamentals</a><a href="csharp-03.html">Next: 03 · OOP →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<section><h2>HospitalApp practice</h2><ol><li>Store patients in List&lt;Patient&gt; and index by ID in Dictionary.</li><li>Find appointments by doctor, date and status.</li><li>Group appointments by doctor and calculate visit counts.</li><li>Project report results into DTOs instead of returning full entities.</li></ol></section><section><h2>Deep dive: collections and LINQ for hospital data</h2><p>Hospitals have changing numbers of patients, doctors, appointments and invoices. Collections handle data structures with different lookup and update patterns.</p><h3>List&lt;T&gt;: ordered records</h3><pre><code>var patients = new List&lt;Patient&gt;
+{
+    new(101, "Amina", true), new(102, "Bilal", false)
+};
+patients.Add(new Patient(103, "Sara", true));
+Patient? found = patients.FirstOrDefault(p => p.Id == 102);</code></pre><p>List searches are generally linear. For frequent lookup by a unique key, consider Dictionary.</p><h3>Dictionary: lookup by patient ID</h3><pre><code>var patientById = new Dictionary&lt;int, Patient&gt;
+{
+    [101] = new Patient(101, "Amina", true),
+    [102] = new Patient(102, "Bilal", false)
+};
+if (patientById.TryGetValue(102, out Patient? patient))
+    Console.WriteLine(patient.Name);</code></pre><p>TryGetValue handles missing keys safely. A duplicate patient ID should be treated as a data-integrity problem, not silently overwritten.</p><h3>HashSet: uniqueness</h3><pre><code>var uniqueIds = new HashSet&lt;int&gt; { 101, 102, 101 };
+Console.WriteLine(uniqueIds.Count); // 2</code></pre><p>Use it when a daily report merges patient IDs from multiple sources and each patient should appear once.</p><h3>Interfaces and LINQ</h3><p>IEnumerable&lt;T&gt; means a sequence can be enumerated. Accept the least powerful interface your method needs.</p><pre><code>static void PrintNames(IEnumerable&lt;Patient&gt; patients)
+{
+    foreach (var patient in patients) Console.WriteLine(patient.Name);
+}
+var activeNames = patients.Where(p => p.IsActive)
+    .OrderBy(p => p.Name).Select(p => p.Name).ToList();</code></pre><p>Where filters, OrderBy sorts and Select projects. This resembles SQL WHERE, ORDER BY and SELECT.</p><h3>Deferred execution and IQueryable</h3><p>Many LINQ-to-Objects queries execute when enumerated; ToList materializes them. IQueryable builds an expression a provider such as EF Core may translate to SQL. Avoid materializing too early, or you may pull every patient into memory before filtering.</p><pre><code>var result = await db.Patients.Where(p => p.IsActive)
+    .Select(p => new PatientListItem(p.Id, p.Name))
+    .ToListAsync();</code></pre><h3>Practice task</h3><ol><li>Store sample patients in a List.</li><li>Build a Dictionary keyed by patient ID.</li><li>Remove duplicate IDs with HashSet.</li><li>Write LINQ queries for active patients, name search and counts by status.</li><li>Compare in-memory LINQ with EF Core IQueryable.</li></ol></section>
+<nav class="page-nav"><a href="csharp-01.html">← Previous: 01 · C# Fundamentals</a><a href="csharp-03.html">Next: 03 · OOP →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
