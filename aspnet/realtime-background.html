@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASP.NET Core Real-time & Background Jobs | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">API</span><span>ASP.NET Core <strong>Messaging</strong></span></a><span class="top-note">SignalR · Hosted services · Queues</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">ASP.NET CORE</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="../csharp.html">C# Language</a><a class="nav-link" href="index.html">ASP.NET Core Overview</a><a class="nav-link" href="roadmap.html">ASP.NET Core Roadmap</a><a class="nav-link" href="fundamentals.html">Hosting & Fundamentals</a><a class="nav-link" href="apis.html">HTTP APIs, REST & MVC</a><a class="nav-link" href="middleware.html">Middleware, Filters & Config</a><a class="nav-link" href="data.html">EF Core & Data Access</a><a class="nav-link" href="di-caching-logging.html">DI, Caching & Logging</a><a class="nav-link active" href="realtime-background.html">Real-time & Background Jobs</a><a class="nav-link" href="testing-deployment.html">Testing & Deployment</a></aside><article class="content"><p class="eyebrow">TOPIC GUIDE</p><h1>Real-time communication and background processing</h1>
+<section><h2>1. SignalR for live updates</h2><p>SignalR lets the server push events to connected clients. In a hospital dashboard it can notify staff when bed occupancy or an appointment queue changes. Do not use SignalR as the durable source of truth; persist the change first, then publish a notification.</p><pre><code>public sealed class HospitalHub : Hub
+{
+    public Task JoinWard(string wardCode)
+        => Groups.AddToGroupAsync(Context.ConnectionId, $"ward:{wardCode}");
+}
+
+// Program.cs
+builder.Services.AddSignalR();
+app.MapHub&lt;HospitalHub&gt;("/hubs/hospital");
+
+// From an application service after a successful database commit:
+public sealed class WardNotifier(IHubContext&lt;HospitalHub&gt; hub)
+{
+    public Task NotifyBedChanged(string wardCode, int bedId, bool occupied)
+        => hub.Clients.Group($"ward:{wardCode}")
+            .SendAsync("BedChanged", new { bedId, occupied });
+}</code></pre></section>
+<section><h2>2. WebSockets</h2><p>WebSockets provide a persistent bidirectional connection. SignalR can use WebSockets and negotiate other transports where configured. Prefer SignalR for typical application messaging; use raw WebSockets when you specifically need a lower-level protocol and are prepared to own connection management.</p></section>
+<section><h2>3. BackgroundService</h2><p>Use hosted services for work that belongs to the application process and is safe to run there, such as periodic cleanup or polling. Long-running or business-critical work may need a durable queue and separate worker process.</p><pre><code>public sealed class AppointmentReminderWorker(
+    IServiceScopeFactory scopeFactory,
+    ILogger&lt;AppointmentReminderWorker&gt; logger)
+    : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(1));
+
+        while (await timer.WaitForNextTickAsync(stoppingToken))
+        {
+            await using var scope = scopeFactory.CreateAsyncScope();
+            var sender = scope.ServiceProvider
+                .GetRequiredService&lt;IAppointmentReminderSender&gt;();
+
+            await sender.SendDueRemindersAsync(stoppingToken);
+            logger.LogInformation("Appointment reminder cycle finished");
+        }
+    }
+}</code></pre><p>Register with <code>builder.Services.AddHostedService&lt;AppointmentReminderWorker&gt;()</code>. Create a DI scope for scoped dependencies such as DbContext. Handle cancellation and make processing idempotent so a retry does not send duplicate reminders.</p></section>
+<section><h2>4. Scheduling libraries</h2><p>Hangfire, Quartz.NET and Coravel provide scheduling abstractions and persistence/integration options. Choose based on durability, clustering, dashboard/security requirements and operational complexity. A simple <code>BackgroundService</code> is enough for many periodic tasks; do not introduce a scheduler without a requirement.</p></section>
+<section><h2>5. Message brokers and message bus</h2><p>RabbitMQ, Kafka and Azure Service Bus solve different messaging problems. MassTransit, NServiceBus and EasyNetQ add higher-level patterns on top of transports. A broker decouples producers and consumers, buffers work and supports independent scaling, but adds infrastructure and delivery semantics that must be handled.</p><pre><code>public sealed record AppointmentBooked(
+    Guid AppointmentId,
+    int PatientId,
+    DateTime StartsAtUtc);
+
+// Conceptual consumer shape; exact interface depends on chosen bus library.
+public sealed class AppointmentBookedHandler
+{
+    public Task HandleAsync(AppointmentBooked message, CancellationToken ct)
+    {
+        // Validate message, deduplicate by AppointmentId,
+        // then perform the notification workflow.
+        return Task.CompletedTask;
+    }
+}</code></pre></section>
+<section><h2>6. Reliability patterns</h2><ul><li><strong>Idempotency:</strong> process the same message more than once without duplicating the business effect.</li><li><strong>Retries:</strong> retry transient failures with bounded backoff; avoid retrying permanent validation errors.</li><li><strong>Dead-letter queue:</strong> isolate messages that repeatedly fail for investigation.</li><li><strong>Outbox:</strong> commit business data and an outgoing event record in one database transaction, then publish it asynchronously.</li><li><strong>Ordering:</strong> define whether ordering is required per patient, appointment or aggregate.</li></ul></section>
+<section><h2>Practice</h2><ol><li>Build a SignalR hub that broadcasts a bed occupancy change.</li><li>Create a hosted service that scans appointments needing reminders.</li><li>Use a scoped service inside the worker via IServiceScopeFactory.</li><li>Design an idempotency key for appointment reminder events.</li><li>Draw an outbox workflow before adding a message broker.</li></ol></section>
+<nav class="page-nav"><a href="di-caching-logging.html">← DI, Caching & Logging</a><a href="testing-deployment.html">Next: Testing & Deployment →</a></nav><footer>ASP.NET Core · Real-time and background processing</footer></article></main></body></html>
