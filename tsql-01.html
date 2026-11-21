@@ -8,4 +8,22 @@ WHERE IsActive = 1
   AND RegistrationDate &gt;= @StartDate
 ORDER BY RegistrationDate DESC;</code></pre><p>Learn SELECT, aliases, WHERE, AND/OR, IN, BETWEEN, LIKE, ORDER BY, TOP, DISTINCT, CASE, CAST, CONVERT and common string/date/numeric functions. Use explicit column lists in production.</p></section>
 <section><h2>NULL and date boundaries</h2><p>NULL means unknown or absent, not zero or empty. Use IS NULL and IS NOT NULL. Understand COALESCE, ISNULL and NULLIF. For datetime filtering, use half-open ranges: timestamp &gt;= @Start and timestamp &lt; @End.</p></section>
-<section><h2>HospitalApp practice</h2><ol><li>Design Patient, Doctor, Department, Appointment, Room, Bed, Invoice and Payment tables.</li><li>Add keys, foreign keys, unique and check constraints.</li><li>Write parameterized patient and appointment searches.</li><li>Create month-wise reports with correct date boundaries.</li></ol></section><nav class="page-nav"><a href="data-access.html">← Previous: 11 · ADO.NET & EF Core</a><a href="tsql-02.html">Next: 13 · T-SQL Querying →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<section><h2>HospitalApp practice</h2><ol><li>Design Patient, Doctor, Department, Appointment, Room, Bed, Invoice and Payment tables.</li><li>Add keys, foreign keys, unique and check constraints.</li><li>Write parameterized patient and appointment searches.</li><li>Create month-wise reports with correct date boundaries.</li></ol></section><section><h2>Deep dive: design the hospital relational database</h2><p>Relational tables store facts and use keys and constraints to protect correctness. Design around entities and relationships, not a single screen.</p><pre><code>CREATE TABLE dbo.Patients
+(
+ PatientId int IDENTITY PRIMARY KEY,
+ MedicalRecordNo varchar(30) NOT NULL UNIQUE,
+ PatientName nvarchar(150) NOT NULL,
+ DateOfBirth date NULL,
+ IsActive bit NOT NULL DEFAULT (1)
+);
+CREATE TABLE dbo.Appointments
+(
+ AppointmentId bigint IDENTITY PRIMARY KEY,
+ PatientId int NOT NULL REFERENCES dbo.Patients(PatientId),
+ ScheduledAt datetime2(0) NOT NULL,
+ Status varchar(20) NOT NULL
+);</code></pre><p>Primary keys identify rows; foreign keys protect relationships; unique constraints prevent duplicate MRNs; NOT NULL prevents missing required values. A foreign key does not decide your deletion policy.</p><h3>Normalization and types</h3><p>Store a patient once and reference PatientId from appointments. Repeating patient name and phone creates update anomalies. Use nvarchar for Unicode names, decimal(p,s) for money, date for date-only facts and datetime2 for timestamps.</p><h3>SELECT, NULL and date ranges</h3><pre><code>SELECT PatientId, MedicalRecordNo, PatientName
+FROM dbo.Patients WHERE IsActive = 1 AND DateOfBirth IS NOT NULL;
+DECLARE @Start date='2026-11-01', @End date='2026-12-01';
+SELECT AppointmentId, PatientId, ScheduledAt FROM dbo.Appointments
+WHERE ScheduledAt >= @Start AND ScheduledAt < @End;</code></pre><p>NULL means unknown/absent, not zero or empty. Use IS NULL, not = NULL. Half-open datetime ranges avoid missing rows with time components.</p><h3>Practice task</h3><ol><li>Create Patients, Doctors and Appointments with keys.</li><li>Add unique MRN and doctor registration constraints.</li><li>Test duplicate and orphan inserts.</li><li>Write parameterized searches.</li><li>Explain why repeating patient name in Appointments is risky.</li></ol></section><nav class="page-nav"><a href="data-access.html">← Previous: 11 · ADO.NET & EF Core</a><a href="tsql-02.html">Next: 13 · T-SQL Querying →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
