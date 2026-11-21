@@ -18,3 +18,5 @@ code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
 
 .sidebar{overflow-y:auto}
 @media(max-width:850px){.sidebar{overflow-y:hidden}}
+
+.top-shortcut{display:inline-flex;align-items:center;padding:8px 13px;border:1px solid #bfd2f8;border-radius:8px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:800;white-space:nowrap}.top-shortcut:hover{background:#dbeafe}@media(max-width:560px){.top-shortcut{font-size:11px;padding:6px 9px}}
