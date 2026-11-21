@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="CI/CD Pipeline Reference"><title>CI/CD Pipeline Reference | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">CI</span><span>DevOps, CI/CD & Cloud</span></a><span class="top-note">GitHub Actions · Azure DevOps · Docker · Cloud</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">ENGINEERING REFERENCE</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">DevOps & Cloud</a><a class="nav-link" href="roadmap.html">CI/CD & Cloud roadmap</a><a class="nav-link active" href="github.html">GitHub workflow</a><a class="nav-link" href="cicd.html" class="nav-link active">CI/CD pipelines</a></aside><article class="content"><p class="eyebrow">DELIVERY ENGINEERING</p><h1>CI/CD pipelines for every language</h1><p class="lead">Build one consistent delivery pipeline and adapt its build/test commands to C#, PHP, JavaScript/TypeScript and Python.</p><section><h2>Pipeline stages</h2><ol><li>Checkout source and select a pinned SDK/runtime.</li><li>Restore dependencies and cache safely.</li><li>Lint, format-check, compile and run unit tests.</li><li>Run integration tests against disposable test services/databases.</li><li>Scan dependencies, source code, containers and secrets.</li><li>Build immutable artifact or container image and publish it.</li><li>Deploy to development/staging, run migrations and smoke tests.</li><li>Require approval for production where required.</li><li>Deploy using rolling/blue-green/canary strategy and verify health.</li><li>Keep rollback and database recovery procedures documented.</li></ol></section>
+<section><h2>Example: .NET pipeline commands</h2><pre><code>dotnet restore
+dotnet format --verify-no-changes
+dotnet build --configuration Release --no-restore
+dotnet test --configuration Release --no-build
+dotnet publish -c Release -o ./publish</code></pre></section>
+<section><h2>Example: PHP pipeline commands</h2><pre><code>composer install --no-interaction --prefer-dist
+vendor/bin/phpunit
+vendor/bin/phpstan analyse
+vendor/bin/phpcs src</code></pre></section>
+<section><h2>Example: Node.js / TypeScript pipeline commands</h2><pre><code>npm ci
+npm run lint
+npm run typecheck
+npm test
+npm run build</code></pre></section>
+<section><h2>Example: Python pipeline commands</h2><pre><code>python -m pip install -r requirements.txt
+ruff check .
+mypy app
+pytest --cov=app</code></pre></section>
+<section><h2>Database migrations in deployment</h2><p>Database changes are often the riskiest part of a release. Prefer backward-compatible expand/contract migrations: add nullable/new structures first, deploy code that supports both shapes, backfill safely, then remove obsolete structures in a later release. Take and verify backups before high-risk changes. Do not assume application rollback automatically reverses database changes.</p></section>
+<section><h2>Deployment strategies and operational checks</h2><p>Understand rolling, blue/green and canary releases. Add readiness/liveness health checks, smoke tests, alert thresholds, deployment annotations, rollback conditions and a human incident owner.</p></section>
+<section><h2>Cloud mapping</h2><p>Deploy containers to Azure Container Apps/App Service/AKS, AWS App Runner/ECS/EKS or Google Cloud Run/GKE. Use managed SQL databases, object storage, secret managers, IAM and monitoring services. Start with one provider and compare service categories rather than memorizing vendor names.</p></section><footer>Programming Academy · Production engineering reference</footer></article></main></body></html>
