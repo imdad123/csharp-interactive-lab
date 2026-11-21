@@ -16,4 +16,24 @@ public Patient Register(RegisterPatientRequest request)
 }</code></pre></section>
 <section><h2>SOLID principles</h2><ul><li>Single Responsibility: one coherent reason to change.</li><li>Open/Closed: extend stable behavior without constantly modifying it.</li><li>Liskov Substitution: derived types honor base expectations.</li><li>Interface Segregation: focused contracts beat oversized interfaces.</li><li>Dependency Inversion: high-level policy should not depend on low-level implementation details.</li></ul></section>
 <section><h2>Dependency injection and architecture</h2><p>Constructor injection makes dependencies explicit and testable. Separate domain rules, application use cases, infrastructure and delivery mechanisms when the complexity justifies it. Repository abstractions can protect meaningful boundaries; unnecessary interfaces create indirection without value.</p></section>
-<section><h2>HospitalApp practice</h2><ol><li>Create RegisterPatientRequest and BookAppointmentRequest DTOs.</li><li>Keep validation independent of Console.ReadLine and HTTP.</li><li>Inject repository abstractions into application services.</li><li>Unit-test service behavior by constructing DTOs directly.</li></ol></section><nav class="page-nav"><a href="csharp-03.html">← Previous: 03 · OOP</a><a href="csharp-05.html">Next: 05 · Exceptions & Files →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<section><h2>HospitalApp practice</h2><ol><li>Create RegisterPatientRequest and BookAppointmentRequest DTOs.</li><li>Keep validation independent of Console.ReadLine and HTTP.</li><li>Inject repository abstractions into application services.</li><li>Unit-test service behavior by constructing DTOs directly.</li></ol></section><section><h2>Deep dive: generics, DTOs, SOLID and dependency injection</h2><h3>Generics remove duplication with type safety</h3><p>Patient, Doctor and Invoice repositories share mechanics. Generics can reuse algorithms while preserving compile-time types.</p><pre><code>public interface IEntity { int Id { get; } }
+public class InMemoryRepository&lt;T&gt; where T : IEntity
+{
+    private readonly List&lt;T&gt; _items = [];
+    public void Add(T item) => _items.Add(item);
+    public T? GetById(int id) => _items.FirstOrDefault(x => x.Id == id);
+}</code></pre><p>The constraint guarantees T exposes Id. Do not automatically build a generic repository for every EF Core project: DbContext and DbSet already provide unit-of-work/repository-like behavior. Add abstractions when they create a useful boundary.</p><h3>DTOs separate transport from domain</h3><p>WebForms, mobile and APIs may send different fields. A DTO defines exactly what crosses a boundary and prevents a client from posting protected entity fields such as IsAdmin or account balance.</p><pre><code>public sealed record RegisterPatientRequest(
+    string Name, DateOnly DateOfBirth, string PhoneNumber);
+public sealed record PatientResponse(
+    int Id, string MedicalRecordNumber, string Name);</code></pre><p>Validate request, map to domain model, persist, then map to response. A DTO is not automatically a domain entity.</p><h3>SOLID with hospital examples</h3><ul><li><strong>Single Responsibility:</strong> registration registers patients; receipt formatting belongs elsewhere.</li><li><strong>Open/Closed:</strong> add another notifier without rewriting registration.</li><li><strong>Liskov:</strong> implementations honor the behavior promised by their interface.</li><li><strong>Interface Segregation:</strong> use IAppointmentNotifier rather than one giant IHospitalService.</li><li><strong>Dependency Inversion:</strong> business workflows depend on abstractions, not a specific SMS vendor SDK.</li></ul><h3>Dependency injection</h3><pre><code>public interface IAppointmentNotifier
+{
+    Task SendConfirmationAsync(int appointmentId, CancellationToken ct);
+}
+public sealed class AppointmentService(IAppointmentNotifier notifier)
+{
+    public Task ConfirmAsync(int id, CancellationToken ct)
+        => notifier.SendConfirmationAsync(id, ct);
+}
+builder.Services.AddScoped&lt;AppointmentService&gt;();
+builder.Services.AddScoped&lt;IAppointmentNotifier, SmsAppointmentNotifier&gt;();</code></pre><p>Scoped suits request-oriented services using a scoped DbContext; Singleton is for safe shared services; Transient creates a new instance each resolution. Never inject a scoped DbContext into a singleton.</p><h3>Practice task</h3><ol><li>Create patient request/response DTOs.</li><li>Implement a generic in-memory repository.</li><li>Extract IAppointmentNotifier.</li><li>Inject a fake notifier in tests and real provider in production.</li></ol></section>
+<nav class="page-nav"><a href="csharp-03.html">← Previous: 03 · OOP</a><a href="csharp-05.html">Next: 05 · Exceptions & Files →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
