@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Python Collections and Iteration"><title>Python Collections and Iteration | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head>
+<body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">PY</span><span>Python Engineering</span></a><span class="top-note">list · tuple · dict · set · itertools</span></header>
+<main class="shell"><aside class="sidebar"><p class="eyebrow">REFERENCE NAVIGATION</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">Python Overview</a><a class="nav-link" href="roadmap.html">Roadmap</a><a class="nav-link" href="fundamentals.html">Language fundamentals</a><a class="nav-link" href="collections.html">Collections & iteration</a><a class="nav-link" href="oop.html">OOP & typing</a><a class="nav-link" href="async.html">Async & concurrency</a><a class="nav-link" href="web-api.html">FastAPI & APIs</a><a class="nav-link" href="testing.html">Testing</a><a class="nav-link" href="production.html">Production engineering</a><a class="nav-link" href="../sql/index.html">SQL &amp; Databases</a><a class="nav-link" href="../git/index.html">Git &amp; GitHub</a><a class="nav-link" href="../engineering/index.html">CI/CD &amp; Cloud</a><a class="nav-link" href="../engineering/github.html">GitHub workflow guide</a><div class="sidebar-note"><strong>Reference approach</strong><p>Concept → syntax → multiple HMS examples → edge cases → professional practice → tests.</p></div></aside><article class="content"><p class="eyebrow">PYTHON REFERENCE</p><h1>Python collections and iteration</h1><p class="lead">Use Python's built-in data structures, iteration protocols and lazy generators effectively.</p><section><h2>Lists, tuples, dictionaries and sets</h2><pre><code>patients = [
+    {"id": 101, "name": "Amina", "active": True},
+    {"id": 102, "name": "Bilal", "active": False},
+]
+
+patients_by_id = {p["id"]: p for p in patients}
+active_names = [p["name"] for p in patients if p["active"]]
+doctor_ids = {4, 7, 4}
+print(doctor_ids)  # {4, 7}</code></pre><p>List is ordered and mutable; tuple is ordered and immutable; dict maps keys to values; set stores unique hashable values. Choose based on access and mutation patterns.</p></section>
+<section><h2>Iteration protocols and generators</h2><pre><code>def stream_appointments(cursor):
+    for row in cursor:
+        yield {
+            "id": row.appointment_id,
+            "patient_id": row.patient_id,
+        }
+
+for item in stream_appointments(database_cursor):
+    process(item)</code></pre><p>Generators yield values lazily and can reduce memory use for large exports. Understand iter, next, generator expressions and context-managed resources.</p></section>
+<section><h2>Comprehensions and functional operations</h2><pre><code>unpaid_balances = {
+    invoice["id"]: invoice["balance"]
+    for invoice in invoices
+    if invoice["balance"] > 0
+}
+
+total_due = sum(
+    invoice["balance"]
+    for invoice in invoices
+    if invoice["status"] == "unpaid"
+)</code></pre><p>Use comprehensions for clear transformations; avoid deeply nested comprehensions that obscure business rules.</p></section>
+<section><h2>Sorting and grouping</h2><pre><code>appointments.sort(key=lambda a: (a["doctor_id"], a["starts_at"]))
+
+from itertools import groupby
+for doctor_id, rows in groupby(
+    appointments, key=lambda a: a["doctor_id"]
+):
+    doctor_appointments = list(rows)</code></pre><p>itertools provides efficient iteration utilities. Remember groupby groups consecutive equal keys, so sort first when needed.</p></section><footer>Programming Academy · Practical reference · Hospital HMS examples</footer></article></main></body></html>
