@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Node.js Web APIs"><title>Node.js Web APIs | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head>
+<body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">JS</span><span>JavaScript & TypeScript</span></a><span class="top-note">Node.js · Express · HTTP · OpenAPI</span></header>
+<main class="shell"><aside class="sidebar"><p class="eyebrow">REFERENCE NAVIGATION</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">JavaScript Overview</a><a class="nav-link" href="roadmap.html">Roadmap</a><a class="nav-link" href="fundamentals.html">Language fundamentals</a><a class="nav-link" href="collections.html">Objects & collections</a><a class="nav-link" href="oop.html">OOP & modules</a><a class="nav-link" href="async.html">Async JavaScript</a><a class="nav-link" href="web-api.html">Node.js & APIs</a><a class="nav-link" href="testing.html">Testing</a><a class="nav-link" href="production.html">Production engineering</a><a class="nav-link" href="../sql/index.html">SQL &amp; Databases</a><a class="nav-link" href="../git/index.html">Git &amp; GitHub</a><a class="nav-link" href="../engineering/index.html">CI/CD &amp; Cloud</a><a class="nav-link" href="../engineering/github.html">GitHub workflow guide</a><div class="sidebar-note"><strong>Reference approach</strong><p>Concept → syntax → multiple HMS examples → edge cases → professional practice → tests.</p></div></aside>
+<article class="content"><p class="eyebrow">JAVASCRIPT REFERENCE</p><h1>Node.js, HTTP and REST APIs</h1><p class="lead">Build secure API endpoints and browser interactions using the same hospital domain.</p><section><h2>Node.js service example</h2><pre><code>import express from "express";
+
+const app = express();
+app.use(express.json());
+
+app.get("/api/patients/:id", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: "Invalid patient id" });
+    }
+    const patient = await patientService.getById(id);
+    if (!patient) return res.status(404).json({ error: "Not found" });
+    return res.json(patient);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.listen(process.env.PORT ?? 3000);</code></pre><p>Use centralized error middleware, request validation, authentication, authorization, rate limiting and structured logging. Never trust a patient ID merely because it appears in the route.</p></section>
+<section><h2>Browser DOM and forms</h2><pre><code>const form = document.querySelector("#appointment-form");
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+  const data = new FormData(form);
+  const payload = Object.fromEntries(data.entries());
+  // Validate client-side for usability; validate again on server.
+});</code></pre></section>
+<section><h2>REST and API contracts</h2><ul><li>Use resource-oriented URLs and correct HTTP methods/status codes.</li><li>Return stable DTOs, not raw database records.</li><li>Use pagination, filtering, sorting and API versioning deliberately.</li><li>Implement idempotency keys for retryable payment operations.</li><li>Document endpoints with OpenAPI and generate typed clients when useful.</li></ul></section><footer>Programming Academy · Practical reference · Hospital HMS examples</footer></article></main></body></html>
