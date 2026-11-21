@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASP.NET Core testing, CI/CD and engineering quality | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">API</span><span>ASP.NET Core <strong>Backend Reference</strong></span></a><span class="top-note">ASP.NET Core · Hospital HMS</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">ASP.NET CORE</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="../csharp.html">C# Language</a><a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="roadmap.html">Complete roadmap</a><a class="nav-link " href="guide-prerequisites.html">Prerequisites</a><a class="nav-link " href="guide-web.html">Web fundamentals</a><a class="nav-link " href="guide-data.html">Data and ORM</a><a class="nav-link " href="guide-platform.html">DI, logging, cloud</a><a class="nav-link " href="guide-communication.html">API and real-time</a><a class="nav-link " href="guide-workers.html">Background and messaging</a><a class="nav-link active" href="guide-testing.html">Testing and CI/CD</a><a class="nav-link " href="guide-architecture.html">Architecture and ecosystem</a><a class="nav-link" href="../sql/index.html">SQL & Databases</a><a class="nav-link" href="../engineering/cicd.html">CI/CD & Cloud</a></aside><article class="content"><p class="eyebrow">DETAILED REFERENCE GUIDE</p><h1>ASP.NET Core testing, CI/CD and engineering quality</h1><p class="lead">Concept, purpose, code examples and production considerations with hospital application scenarios.</p><section><h2>Unit testing with xUnit, NUnit and MSTest</h2><p>Unit tests verify small units of behavior without external infrastructure. All three are established .NET test frameworks. Test business rules and application services in isolation.</p><pre><code>public class InvoiceTests
+{
+ [Fact]
+ public void Balance_Is_Total_Minus_Paid()
+ {
+  var invoice = new Invoice(1000m, 250m);
+  Assert.Equal(750m, invoice.Balance);
+ }
+}</code></pre></section>,<section><h2>Assertions and Shouldly</h2><p>Assertions express expected outcomes. Standard framework assertions work well; Shouldly offers fluent readable assertion syntax.</p><pre><code>result.ShouldBe(750m);
+patient.Name.ShouldBe("Amina");</code></pre></section>,<section><h2>Mocking with Moq, NSubstitute and FakeItEasy</h2><p>Mocks isolate meaningful external boundaries such as repositories, payment gateways and message senders. Avoid mocking every class or testing implementation details.</p><pre><code>var sender = Substitute.For&lt;IReceiptSender&gt;();
+var service = new InvoiceService(sender);
+await service.FinalizeAsync(invoice, ct);
+await sender.Received(1).SendAsync(Arg.Any&lt;Receipt&gt;(), ct);</code></pre></section>,<section><h2>Fake data with AutoFixture and Bogus</h2><p>AutoFixture creates test specimens; Bogus generates realistic fake values. Use deterministic seeds when reproducibility matters and never put real patient records into fixtures.</p><pre><code>var faker = new Faker&lt;PatientDto&gt;()
+ .RuleFor(p =&gt; p.Id, f =&gt; f.IndexFaker + 1)
+ .RuleFor(p =&gt; p.Name, f =&gt; f.Name.FullName());
+var sample = faker.Generate();</code></pre></section>,<section><h2>Integration testing with WebApplicationFactory</h2><p>WebApplicationFactory boots the ASP.NET Core app in a test host, allowing routes, middleware, DI and application services to be tested together.</p><pre><code>public class PatientApiTests : IClassFixture&lt;WebApplicationFactory&lt;Program&gt;&gt;
+{
+ private readonly HttpClient _client;
+ public PatientApiTests(WebApplicationFactory&lt;Program&gt; factory) =&gt; _client = factory.CreateClient();
+ [Fact] public async Task Health_Returns_Ok()
+  =&gt; (await _client.GetAsync("/health")).EnsureSuccessStatusCode();
+}</code></pre></section>,<section><h2>Testcontainers and Respawn</h2><p>Testcontainers starts real infrastructure such as SQL Server/PostgreSQL in containers. Respawn resets database state between tests. Keep test data isolated and deterministic.</p><pre><code>// Start a disposable SQL container for integration tests.
+// Reset the test database between test cases:
+await respawner.ResetAsync(connectionString);</code></pre></section>,<section><h2>End-to-end testing with Playwright, Puppeteer and Cypress</h2><p>E2E tests drive a real browser through user journeys. Cover critical workflows such as patient registration and appointment booking; keep the suite focused.</p><pre><code>await page.GotoAsync(baseUrl + "/patients/new");
+await page.GetByLabel("Full name").FillAsync("Amina Khan");
+await page.GetByRole(AriaRole.Button, new() { Name = "Save" }).ClickAsync();</code></pre></section>,<section><h2>Behavior testing and SpecFlow</h2><p>BDD describes behavior in business language. The roadmap lists SpecFlow and light BDD; verify current package support and licensing before selecting a framework.</p><pre><code>Feature: Appointment booking
+ Scenario: A doctor has an available slot
+  Given Dr Ali has an open slot
+  When a patient books the slot
+  Then the appointment is confirmed</code></pre></section>,<section><h2>CI/CD: GitHub Actions, Azure Pipelines, GitLab and CircleCI</h2><p>A pipeline restores, builds, analyzes and tests a commit before publishing an artifact. Add dependency scanning, secret scanning, migration review and deployment approvals.</p><pre><code>dotnet restore
+dotnet format --verify-no-changes
+dotnet build -c Release --no-restore
+dotnet test -c Release --no-build
+dotnet publish -c Release -o ./artifacts</code></pre></section>,<section><h2>Nuke build automation</h2><p>Nuke defines build pipelines in C# and can share build logic between developer machines and CI. Use it when the repository needs reusable build orchestration.</p><pre><code>// Nuke target concept:
+Target Compile =&gt; _ =&gt; _
+ .Executes(() =&gt; DotNetBuild(s =&gt; s.SetProjectFile(Solution)));</code></pre></section><footer>Programming Academy · ASP.NET Core reference</footer></article></main></body></html>
