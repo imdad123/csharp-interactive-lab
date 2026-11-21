@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Phase 2 — Object-Oriented Programming practical C# guide with Hospital HMS examples"><title>Phase 2 — Object-Oriented Programming | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head>
+<body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">C#</span><span>C# <strong>Language Reference</strong></span></a><span class="top-note">C# 14 · .NET 10 · Hospital HMS examples</span></header>
+<main class="shell"><aside class="sidebar"><p class="eyebrow">C# REFERENCE</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="../csharp.html">C# Overview</a><a class="nav-link" href="../roadmap.html">Complete C# Roadmap</a><a class="nav-link " href="phase-1.html">Phase 1 — Fundamentals</a><a class="nav-link active" href="phase-2.html">Phase 2 — OOP</a><a class="nav-link " href="phase-3.html">Phase 3 — Advanced Types</a><a class="nav-link " href="phase-4.html">Phase 4 — Collections</a><a class="nav-link " href="phase-5.html">Phase 5 — LINQ</a><a class="nav-link " href="phase-6.html">Phase 6 — Exceptions & Debugging</a><a class="nav-link " href="phase-7.html">Phase 7 — Delegates & Functional</a><a class="nav-link " href="phase-8.html">Phase 8 — Async & Parallel</a><a class="nav-link" href="../dotnet.html">.NET Platform</a><a class="nav-link" href="../aspnet/index.html">ASP.NET Core (separate track)</a><p class="sidebar-note">Examples use hospital patients, doctors, appointments, invoices and clinical workflows. Snippets are illustrative unless a complete project is shown.</p></aside>
+<article class="content"><p class="eyebrow">PHASE 2 · 26 TOPICS</p><h1>Phase 2 — Object-Oriented Programming</h1><p class="lead">A reference guide in the exact roadmap order. Each topic explains the purpose, shows C# syntax, and connects the idea to a realistic Hospital Management System scenario.</p>
+<section id="topic-1"><h2>1. Introduction to OOP</h2><p>Object-oriented programming organizes software around objects that combine state and behavior. It helps model entities and enforce rules, but should be used to simplify the domain rather than add layers without purpose.</p><pre><code>public sealed class Patient
+{
+    public string Mrn { get; }
+    public Patient(string mrn) =&gt; Mrn = mrn;
+}</code></pre></section>
+<section id="topic-2"><h2>2. Classes and Objects</h2><p>A class defines a reference type; an object is an instance created from that type. Model identity-bearing entities such as patients and appointments as classes.</p><pre><code>var patient = new Patient("MR-1205");
+Console.WriteLine(patient.Mrn);
+
+public sealed class Patient(string mrn) { public string Mrn { get; } = mrn; }</code></pre></section>
+<section id="topic-3"><h2>3. Fields and Properties</h2><p>Fields store implementation state. Properties expose controlled access and can validate or compute values. Prefer properties for public APIs and keep fields private.</p><pre><code>public sealed class Patient
+{
+    private string _name = "";
+    public string Name { get =&gt; _name; set =&gt; _name = value.Trim(); }
+}</code></pre></section>
+<section id="topic-4"><h2>4. Constructors</h2><p>A constructor establishes a valid initial state when an object is created. Validate required data at the boundary and avoid objects that can exist in an invalid state.</p><pre><code>public sealed class Invoice(int id, decimal total)
+{
+    public int Id { get; } = id &gt; 0 ? id : throw new ArgumentOutOfRangeException(nameof(id));
+    public decimal Total { get; } = total &gt;= 0 ? total : throw new ArgumentOutOfRangeException(nameof(total));
+}</code></pre></section>
+<section id="topic-5"><h2>5. Constructor overloading</h2><p>Constructor overloading provides multiple creation paths. Use constructor chaining with this(...) to centralize initialization rules.</p><pre><code>public sealed class Doctor
+{
+    public string Name { get; }
+    public string Specialty { get; }
+    public Doctor(string name) : this(name, "General") { }
+    public Doctor(string name, string specialty) =&gt; (Name, Specialty) = (name, specialty);
+}</code></pre></section>
+<section id="topic-6"><h2>6. Static constructors</h2><p>A static constructor initializes static state once before the type is first used. It has no access modifier or parameters; keep it simple and deterministic.</p><pre><code>public static class HospitalDefaults
+{
+    public static readonly string TimeZoneId;
+    static HospitalDefaults() =&gt; TimeZoneId = "Pakistan Standard Time";
+}</code></pre></section>
+<section id="topic-7"><h2>7. Object initializers</h2><p>Object initializers set accessible properties after construction. They improve readability for DTOs and configuration objects; they do not replace constructor validation for invariants.</p><pre><code>var patient = new PatientProfile { Name = "Amina", IsActive = true };
+
+public sealed class PatientProfile { public string Name { get; set; } = ""; public bool IsActive { get; set; } }</code></pre></section>
+<section id="topic-8"><h2>8. Encapsulation</h2><p>Encapsulation hides internal state and exposes operations that protect invariants. Avoid public setters when callers must not bypass business rules.</p><pre><code>public sealed class Invoice
+{
+    private decimal _paid;
+    public decimal Balance { get; private set; }
+    public void RecordPayment(decimal amount)
+    {
+        if (amount &lt;= 0 || amount &gt; Balance) throw new ArgumentOutOfRangeException(nameof(amount));
+        _paid += amount; Balance -= amount;
+    }
+}</code></pre></section>
+<section id="topic-9"><h2>9. Inheritance</h2><p>Inheritance models an is-a relationship and reuses a base contract. Use it only when derived types can safely substitute for the base type.</p><pre><code>public abstract class Person(string name) { public string Name { get; } = name; }
+public sealed class Doctor(string name, string specialty) : Person(name) { public string Specialty { get; } = specialty; }</code></pre></section>
+<section id="topic-10"><h2>10. Method overriding</h2><p>A derived class overrides a virtual or abstract base member to provide specialized behavior. Dispatch is selected at runtime through the base contract.</p><pre><code>public class Notification { public virtual string Format(string text) =&gt; text; }
+public sealed class SmsNotification : Notification { public override string Format(string text) =&gt; $"SMS: {text}"; }</code></pre></section>
+<section id="topic-11"><h2>11. Method hiding (new)</h2><p>The new modifier hides an inherited member rather than overriding it. Member selection depends on the compile-time type, so hiding can be surprising.</p><pre><code>public class BaseReport { public void Print() =&gt; Console.WriteLine("Base"); }
+public class DailyReport : BaseReport { public new void Print() =&gt; Console.WriteLine("Daily"); }
+BaseReport report = new DailyReport(); report.Print(); // Base</code></pre></section>
+<section id="topic-12"><h2>12. Polymorphism</h2><p>Polymorphism allows code to work with a base class or interface while runtime objects provide different implementations. It reduces branching across concrete types.</p><pre><code>IEnumerable&lt;INotification&gt; channels = [new Email(), new Sms()];
+foreach (var channel in channels) channel.Send("Appointment confirmed");</code></pre></section>
+<section id="topic-13"><h2>13. Abstraction</h2><p>Abstraction exposes essential behavior and hides implementation details. An application service can depend on a repository contract rather than a database vendor.</p><pre><code>public interface IPatientReader { Task&lt;PatientDto?&gt; FindAsync(int id, CancellationToken ct); }</code></pre></section>
+<section id="topic-14"><h2>14. Abstract classes</h2><p>An abstract class cannot be instantiated directly and can combine shared implementation with abstract members that derived types must implement.</p><pre><code>public abstract class Report { public abstract string Generate(); public void Print() =&gt; Console.WriteLine(Generate()); }
+public sealed class WardReport : Report { public override string Generate() =&gt; "Ward occupancy"; }</code></pre></section>
+<section id="topic-15"><h2>15. Interfaces</h2><p>An interface defines a contract/capability without prescribing a concrete implementation. It supports substitutability, dependency inversion and test doubles.</p><pre><code>public interface IClock { DateTimeOffset UtcNow { get; } }
+public sealed class SystemClock : IClock { public DateTimeOffset UtcNow =&gt; DateTimeOffset.UtcNow; }</code></pre></section>
+<section id="topic-16"><h2>16. Interface implementation</h2><p>A class implements an interface by providing members that satisfy its contract. The compiler checks required members and signatures.</p><pre><code>public sealed class PatientRepository : IPatientReader
+{
+    public Task&lt;PatientDto?&gt; FindAsync(int id, CancellationToken ct) =&gt; Task.FromResult&lt;PatientDto?&gt;(null);
+}</code></pre></section>
+<section id="topic-17"><h2>17. Multiple interface implementation</h2><p>A class can implement multiple interfaces to expose several independent capabilities. Keep each interface cohesive.</p><pre><code>public sealed class PatientDocument : IAuditable, IArchivable
+{
+    public DateTimeOffset CreatedAt { get; } = DateTimeOffset.UtcNow;
+    public void Archive() { }
+}</code></pre></section>
+<section id="topic-18"><h2>18. Explicit interface implementation</h2><p>Explicit implementation qualifies the member with the interface name. It is useful when interfaces have conflicting member names or when an implementation should only be accessed through the interface.</p><pre><code>public interface IPrintable { void Export(); }
+public interface IExportable { void Export(); }
+public sealed class Invoice : IPrintable, IExportable
+{
+    void IPrintable.Export() =&gt; Console.WriteLine("Print invoice");
+    void IExportable.Export() =&gt; Console.WriteLine("Export PDF");
+}</code></pre></section>
+<section id="topic-19"><h2>19. Sealed classes and methods</h2><p>sealed prevents inheritance or further overriding. Use it when extension is not part of the intended contract, not as a default for every type.</p><pre><code>public class BaseService { public virtual void Run() { } }
+public sealed class FinalService : BaseService { public sealed override void Run() { } }</code></pre></section>
+<section id="topic-20"><h2>20. Partial classes</h2><p>Partial allows one type declaration to be split across files. It is commonly used by generated code and designer files; avoid splitting manually without a clear reason.</p><pre><code>// Patient.Generated.cs
+public partial class PatientForm { private void InitializeControls() { } }
+// Patient.cs
+public partial class PatientForm { public void Save() { } }</code></pre></section>
+<section id="topic-21"><h2>21. Nested classes</h2><p>A nested class is declared inside another type and can be useful for tightly scoped implementation details. Avoid nesting types merely to shorten names.</p><pre><code>public class PatientImport
+{
+    private sealed class CsvRow { public string Mrn { get; init; } = ""; }
+}</code></pre></section>
+<section id="topic-22"><h2>22. Static classes</h2><p>A static class cannot be instantiated and contains only static members. Use it for stateless utilities; do not use it as a global service locator.</p><pre><code>public static class MrnFormatter
+{
+    public static string Normalize(string mrn) =&gt; mrn.Trim().ToUpperInvariant();
+}</code></pre></section>
+<section id="topic-23"><h2>23. this and base keywords</h2><p>this refers to the current instance and can disambiguate members or chain constructors. base accesses base-class members and constructors.</p><pre><code>public class Person(string name) { public string Name { get; } = name; }
+public sealed class Doctor(string name, string specialty) : Person(name)
+{
+    public string Specialty { get; } = specialty;
+}</code></pre></section>
+<section id="topic-24"><h2>24. Object class and its methods</h2><p>All .NET classes ultimately derive from object. Important members include ToString, Equals, GetHashCode and GetType. Override equality consistently when defining value-like equality.</p><pre><code>public sealed class PatientCode(string value)
+{
+    public override string ToString() =&gt; value;
+}</code></pre></section>
+<section id="topic-25"><h2>25. Composition vs Inheritance</h2><p>Composition builds behavior by holding collaborators; inheritance extends a base type. Prefer composition when a type uses another service rather than being a specialized form of it.</p><pre><code>public sealed class AppointmentService(INotificationSender sender)
+{
+    public Task ConfirmAsync(string message, CancellationToken ct) =&gt; sender.SendAsync(message, ct);
+}</code></pre></section>
+<section id="topic-26"><h2>26. Association, Aggregation and Composition</h2><p>Association means objects know about one another. Aggregation is a whole-part relationship where parts can live independently. Composition implies strong ownership/lifecycle. C# does not enforce these UML distinctions; model them through references and lifecycle rules.</p><pre><code>public sealed class Appointment(Patient patient, Doctor doctor)
+{
+    public Patient Patient { get; } = patient; // associated existing entities
+    public Doctor Doctor { get; } = doctor;
+}
+public sealed class Invoice { private readonly List&lt;InvoiceLine&gt; _lines = []; } // owns its lines</code></pre></section>
+<nav class="page-nav"><a href="phase-1.html">← Previous phase</a><a href="phase-3.html">Next phase →</a></nav><footer>Programming Academy · Static reference documentation · C# 14 / .NET 10</footer></article></main></body></html>
