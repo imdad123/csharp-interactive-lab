@@ -22,4 +22,33 @@
 <section><h2>Inheritance and polymorphism</h2><p>Inheritance models an “is-a” relationship. Virtual and abstract members allow specialization; polymorphism lets callers work through a common base type. Derived classes must honor the base contract. Do not use inheritance only to reuse a few lines of code.</p></section>
 <section><h2>Interfaces and composition</h2><p>Interfaces define capabilities or contracts. Composition combines collaborating objects and is often preferable to inheritance. For example, AppointmentService can depend on an IAppointmentRepository and INotificationSender without being a kind of either.</p></section>
 <section><h2>Members and access modifiers</h2><ul><li>public, private, protected, internal, protected internal, private protected.</li><li>static belongs to the type; readonly is assigned at declaration or constructor; const is compile-time constant.</li><li>sealed prevents further inheritance/overriding where appropriate.</li><li>Understand object equality, ToString, Equals and GetHashCode.</li></ul></section>
-<section><h2>HospitalApp practice</h2><p>Create Patient, Doctor, Department, Appointment, Room, Bed and Invoice models. Protect appointment state using methods. Use interfaces for service boundaries and composition for scheduling and billing collaborators.</p></section><nav class="page-nav"><a href="csharp-02.html">← Previous: 02 · Collections & LINQ</a><a href="csharp-04.html">Next: 04 · Generics & Design →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<section><h2>HospitalApp practice</h2><p>Create Patient, Doctor, Department, Appointment, Room, Bed and Invoice models. Protect appointment state using methods. Use interfaces for service boundaries and composition for scheduling and billing collaborators.</p></section><section><h2>Deep dive: OOP in a hospital system</h2><p>OOP keeps related data and behavior together. Without it, a large application becomes unrelated variables and long methods that are difficult to change safely.</p><h3>Class, object and encapsulation</h3><pre><code>public class Patient
+{
+    public int Id { get; }
+    public string Name { get; private set; }
+    public bool IsActive { get; private set; }
+    public Patient(int id, string name)
+    {
+        if (id <= 0) throw new ArgumentOutOfRangeException(nameof(id));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Name required");
+        Id = id; Name = name; IsActive = true;
+    }
+    public void Deactivate() => IsActive = false;
+}</code></pre><p>The constructor establishes valid state. A private setter prevents unrelated code changing activity without the domain operation.</p><h3>Inheritance versus composition</h3><p>A ConsultantDoctor may be a Doctor (is-a). An Appointment is not a Patient. An Appointment has a Patient and Doctor (has-a), so composition is the correct relationship.</p><pre><code>public class Appointment
+{
+    public int Id { get; }
+    public Patient Patient { get; }
+    public Doctor Doctor { get; }
+    public DateTime ScheduledAt { get; }
+    public Appointment(int id, Patient patient, Doctor doctor, DateTime at)
+        => (Id, Patient, Doctor, ScheduledAt) = (id, patient, doctor, at);
+}</code></pre><h3>Interfaces and polymorphism</h3><pre><code>public interface IPaymentMethod
+{
+    Task&lt;PaymentResult&gt; PayAsync(decimal amount, CancellationToken ct);
+}
+public sealed class CashPayment : IPaymentMethod
+{
+    public Task&lt;PaymentResult&gt; PayAsync(decimal amount, CancellationToken ct)
+        => Task.FromResult(PaymentResult.Accepted(amount));
+}</code></pre><p>Invoice processing can depend on IPaymentMethod instead of hard-coding cash, card or another approved payment provider. The same contract supports different implementations.</p><h3>Access modifiers and design judgment</h3><p>Public is an external contract; private hides implementation; protected is available to derived types; internal limits access to the assembly. Prefer the narrowest access. A tiny calculation does not need a class hierarchy. Avoid one class per noun without a responsibility.</p><h3>Practice task</h3><ol><li>Implement Patient and Doctor.</li><li>Implement Appointment using composition.</li><li>Prevent booking for inactive patients.</li><li>Define IPaymentMethod and two implementations.</li><li>Test rules without console or database.</li></ol></section>
+<nav class="page-nav"><a href="csharp-02.html">← Previous: 02 · Collections & LINQ</a><a href="csharp-04.html">Next: 04 · Generics & Design →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
