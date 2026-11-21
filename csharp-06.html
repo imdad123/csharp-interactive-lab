@@ -27,4 +27,146 @@ Console.WriteLine(phoneNumber?.Length ?? 0);</code></pre><p>Compiler annotations
 };</code></pre><h3>Tuples and deconstruction</h3><p>Tuples work for small local grouped results; public APIs and complex concepts are usually clearer as named records.</p><pre><code>static (int Count, decimal Total) Summarize(IEnumerable&lt;Invoice&gt; invoices)
     => (invoices.Count(), invoices.Sum(x => x.Amount));
 var (count, total) = Summarize(monthlyInvoices);</code></pre><h3>Extension methods, reflection and performance</h3><p>Extension methods add cohesive helper behavior without modifying a type. Reflection inspects metadata at runtime and powers serializers, DI and ORMs; do not use it for ordinary property access. Measure before optimizing; understand allocations, boxing, spans and pooling when profiling identifies a bottleneck.</p><h3>Practice task</h3><ol><li>Represent appointment responses as records.</li><li>Enable nullable reference types.</li><li>Use a switch expression for appointment status.</li><li>Compare a tuple report result with a named record.</li></ol></section>
-<nav class="page-nav"><a href="csharp-05.html">← Previous: 05 · Exceptions & Files</a><a href="csharp-07.html">Next: 07 · Delegates & Async →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<nav class="page-nav"><a href="csharp-05.html">← Previous: 05 · Exceptions & Files</a><a href="csharp-07.html">Next: 07 · Delegates & Async →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer><section><h2>Worked examples: modern C# features</h2>
+<h3>Nullable reference types</h3>
+<pre><code>#nullable enable
+string patientName = "Amina";
+string? middleName = null;
+
+string displayName = middleName is null
+    ? patientName
+    : $"{patientName} {middleName}";</code></pre>
+<p>Nullable reference types add compile-time warnings; they do not add automatic runtime null checks. Enable them in the project and treat warnings as useful design feedback.</p>
+<h3>Pattern matching with property and relational patterns</h3>
+<pre><code>static string Triage(int age, int temperature)
+    => age switch
+    {
+        < 0 => "Invalid age",
+        >= 65 when temperature >= 39 => "Urgent review",
+        _ when temperature >= 39 => "Urgent review",
+        _ => "Standard assessment"
+    };
+
+Console.WriteLine(Triage(70, 39));</code></pre>
+<h3>Switch expressions</h3>
+<pre><code>static decimal GetDiscountRate(string patientCategory) =>
+    patientCategory switch
+    {
+        "Staff" => 0.20m,
+        "Senior" => 0.10m,
+        "Standard" => 0m,
+        _ => throw new ArgumentOutOfRangeException(nameof(patientCategory))
+    };</code></pre>
+<h3>Expression-bodied members</h3>
+<pre><code>public sealed class Invoice(decimal subtotal, decimal tax)
+{
+    public decimal Subtotal { get; } = subtotal;
+    public decimal Tax { get; } = tax;
+    public decimal Total => Subtotal + Tax;
+    public bool IsPayable => Total > 0;
+}</code></pre>
+<p>Use expression-bodied syntax for short, obvious expressions. Prefer a block body when validation, multiple steps or debugging clarity is needed.</p>
+<h3>Object initializers</h3>
+<pre><code>var patient = new PatientProfile
+{
+    FullName = "Amina Khan",
+    DateOfBirth = new DateOnly(1995, 4, 12),
+    IsActive = true
+};</code></pre>
+<h3>Collection initializers and collection expressions</h3>
+<pre><code>List&lt;string&gt; departments = new()
+{
+    "Emergency",
+    "Cardiology",
+    "Pediatrics"
+};
+
+// C# 12 collection expression:
+string[] wardCodes = ["MED", "SURG", "ICU"];</code></pre>
+<p>Collection expressions are a modern C# feature. Their target type must be known from context. Use a collection initializer when it reads more clearly or when working with older language versions.</p>
+<h3>Target-typed new</h3>
+<pre><code>PatientProfile patient = new()
+{
+    FullName = "Bilal Ahmed",
+    IsActive = true
+};
+
+List&lt;int&gt; appointmentIds = new() { 101, 102, 103 };</code></pre>
+<h3>Init-only properties</h3>
+<pre><code>public sealed class DoctorProfile
+{
+    public string Name { get; init; } = "";
+    public string Specialty { get; init; } = "";
+}
+
+var doctor = new DoctorProfile { Name = "Dr. Sara", Specialty = "Cardiology" };
+// doctor.Name = "Dr. Noor"; // not allowed after initialization</code></pre>
+<h3>Required properties</h3>
+<pre><code>public sealed class PatientDto
+{
+    public required int Id { get; init; }
+    public required string FullName { get; init; }
+    public string? Phone { get; init; }
+}
+
+var dto = new PatientDto { Id = 1205, FullName = "Amina" };</code></pre>
+<p><code>required</code> enforces initialization at compile time for C# callers. It does not replace runtime validation for HTTP, JSON or database input.</p>
+<h3>Records and value-based equality</h3>
+<pre><code>public sealed record Money(decimal Amount, string Currency);
+
+var first = new Money(100m, "PKR");
+var second = new Money(100m, "PKR");
+
+Console.WriteLine(first == second); // True: value equality
+var revised = first with { Amount = 150m };</code></pre>
+<p>Records are useful for immutable data contracts and value-like objects. Database entities with identity and tracked mutable lifecycle are usually modeled as classes.</p>
+<h3>Structs and enums</h3>
+<pre><code>public enum AppointmentStatus
+{
+    Booked,
+    CheckedIn,
+    Completed,
+    Cancelled
+}
+
+public readonly record struct Temperature(decimal Celsius);
+
+var status = AppointmentStatus.Booked;
+var temperature = new Temperature(37.2m);</code></pre>
+<p>Enums improve readability over magic strings, but persist stable values deliberately when storing them in a database or external contract. Structs copy by value; keep them small and immutable when possible.</p>
+<h3>Extension methods</h3>
+<pre><code>public static class PatientExtensions
+{
+    public static bool IsAdult(this PatientProfile patient)
+        => patient.Age >= 18;
+}
+
+bool adult = patient.IsAdult();</code></pre>
+<p>Extension methods add discoverable helper syntax without modifying the original type. Avoid using them to hide important domain behavior or create ambiguous APIs.</p>
+<h3>Tuples and deconstruction</h3>
+<pre><code>static (int Count, decimal Total) Summarize(IEnumerable&lt;Invoice&gt; invoices)
+    => (invoices.Count(), invoices.Sum(i => i.Total));
+
+var (invoiceCount, amount) = Summarize(openInvoices);
+Console.WriteLine($"{invoiceCount} invoices total {amount:N2}");</code></pre>
+<h3>Advanced LINQ: chunking and distinct projection</h3>
+<pre><code>var uniqueDepartments = patients
+    .Select(p => p.Department)
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .OrderBy(name => name)
+    .ToArray();
+
+foreach (var batch in patients.Chunk(2))
+    Console.WriteLine($"Processing batch of {batch.Length} patients");</code></pre>
+<h3>Performance: avoid repeated enumeration</h3>
+<pre><code>IEnumerable&lt;Patient&gt; query = LoadPatients().Where(p => p.IsActive);
+
+// Bad if the source is expensive or has side effects: enumerates repeatedly.
+int count = query.Count();
+Patient? first = query.FirstOrDefault();
+
+// Materialize once when a stable in-memory snapshot is intended.
+List&lt;Patient&gt; snapshot = query.ToList();
+count = snapshot.Count;
+first = snapshot.FirstOrDefault();</code></pre>
+</section></article></main></body></html>
