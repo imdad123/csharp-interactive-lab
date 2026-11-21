@@ -1,44 +1,570 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="01 · C# fundamentals — C# and T-SQL Mastery reference"><title>01 · C# fundamentals | C# &amp; T-SQL Mastery</title><link rel="stylesheet" href="styles.css"></head><body><header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">C#</span><span>C# &amp; T-SQL <strong>Mastery</strong></span></a><span class="top-note">Static reference · C# 14 / .NET 10</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">MASTERY CONTENTS</p><a class="nav-link" href="index.html">Home</a><a class="nav-link" href="roadmap.html">Roadmap</a><a class="nav-link active" href="csharp-01.html">01 · C# Fundamentals</a><a class="nav-link" href="csharp-02.html">02 · Collections & LINQ</a><a class="nav-link" href="csharp-03.html">03 · OOP</a><a class="nav-link" href="csharp-04.html">04 · Generics & Design</a><a class="nav-link" href="csharp-05.html">05 · Exceptions & Files</a><a class="nav-link" href="csharp-06.html">06 · Modern C#</a><a class="nav-link" href="csharp-07.html">07 · Delegates & Async</a><a class="nav-link" href="dotnet.html">08 · .NET Internals</a><a class="nav-link" href="testing.html">09 · Testing</a><a class="nav-link" href="aspnet.html">10 · ASP.NET Core</a><a class="nav-link" href="data-access.html">11 · ADO.NET & EF Core</a><a class="nav-link" href="tsql-01.html">12 · SQL Foundations</a><a class="nav-link" href="tsql-02.html">13 · T-SQL Querying</a><a class="nav-link" href="tsql-03.html">14 · T-SQL Programming</a><a class="nav-link" href="tsql-04.html">15 · SQL Performance</a><a class="nav-link" href="hospitalapp.html">16 · HospitalApp</a><div class="sidebar-note"><strong>Study method</strong><p>Why it exists → problem solved → mental model → syntax → HospitalApp example → professional practice.</p></div></aside><article class="content"><p class="eyebrow">C# &amp; T-SQL MASTERY REFERENCE</p><h1>01 · C# fundamentals</h1><p class="lead">The building blocks used in almost every C# application. Learn these through HospitalApp.Console.</p><div class="callout"><strong>Study approach:</strong> Understand the problem first, then the concept, syntax, trade-offs, and its use in a real enterprise application.</div>
-<section><h2>Why the fundamentals exist</h2><p>Programs need to represent information, make decisions, repeat operations and organize instructions. Types, expressions, control flow and methods give these operations structure and compile-time safety.</p></section>
-<section><h2>Program structure and types</h2><ul><li>Namespaces, using directives, top-level statements, Main and project structure.</li><li>Built-in types: int, long, decimal, double, bool, char, string, DateTime, DateOnly.</li><li>Value types versus reference types; understand references and object lifetime without treating stack/heap rules as absolute.</li><li>Variables, const, readonly, var, type inference and scope.</li><li>Conversions, casting, parsing, TryParse and nullable values.</li><li>Use decimal for financial values; use appropriate date/time types for temporal meaning.</li></ul><pre><code>int patientId = 101;
-string patientName = "Amina";
-decimal fee = 1500.00m;
-bool isActive = true;
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="01 · C# fundamentals — C# and T-SQL Mastery reference"><title>01 · C# fundamentals | C# &amp; T-SQL Mastery</title><link rel="stylesheet" href="styles.css"></head><body><header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">C#</span><span>C# &amp; T-SQL <strong>Mastery</strong></span></a><span class="top-note">Static reference · C# 14 / .NET 10</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">MASTERY CONTENTS</p><a class="nav-link" href="index.html">Home</a><a class="nav-link" href="roadmap.html">Roadmap</a><a class="nav-link active" href="csharp-01.html">01 · C# Fundamentals</a><a class="nav-link" href="csharp-02.html">02 · Collections & LINQ</a><a class="nav-link" href="csharp-03.html">03 · OOP</a><a class="nav-link" href="csharp-04.html">04 · Generics & Design</a><a class="nav-link" href="csharp-05.html">05 · Exceptions & Files</a><a class="nav-link" href="csharp-06.html">06 · Modern C#</a><a class="nav-link" href="csharp-07.html">07 · Delegates & Async</a><a class="nav-link" href="dotnet.html">08 · .NET Internals</a><a class="nav-link" href="testing.html">09 · Testing</a><a class="nav-link" href="aspnet.html">10 · ASP.NET Core</a><a class="nav-link" href="data-access.html">11 · ADO.NET & EF Core</a><a class="nav-link" href="tsql-01.html">12 · SQL Foundations</a><a class="nav-link" href="tsql-02.html">13 · T-SQL Querying</a><a class="nav-link" href="tsql-03.html">14 · T-SQL Programming</a><a class="nav-link" href="tsql-04.html">15 · SQL Performance</a><a class="nav-link" href="hospitalapp.html">16 · HospitalApp</a><div class="sidebar-note"><strong>Study method</strong><p>Why it exists → problem solved → mental model → syntax → HospitalApp example → professional practice.</p></div></aside><article class="content">
+<p class="eyebrow">C# LANGUAGE REFERENCE · TOPICS 01–08</p>
+<h1>01 · C# foundations</h1>
+<p class="lead">A detailed reference for the language fundamentals used in every C# application. Examples use a HospitalApp.Console project and are written for modern C# / .NET 10 unless a version note says otherwise.</p>
+<div class="callout"><strong>How to use this page:</strong> Read the explanation, type each example into a small console project, change the values, observe the output, then complete the practice tasks. Code examples are intentionally small enough to run and modify independently.</div>
+<section><h2>Start with a minimal console project</h2>
+<p>Create a project with the .NET CLI. The SDK supplies the compiler, build tools and runtime targeting packs.</p>
+<pre><code>dotnet new console -n HospitalApp.Console
+cd HospitalApp.Console
+dotnet run</code></pre>
+<p>A minimal top-level program:</p>
+<pre><code>Console.WriteLine("HospitalApp starting...");
+Console.WriteLine($"Runtime: {Environment.Version}");</code></pre>
+<p>Top-level statements remove the ceremony of an explicit <code>Program</code> class and <code>Main</code> method for small applications. The compiler still generates an entry point. For larger projects, split code into types and files rather than keeping all logic in Program.cs.</p>
+<h3>Explicit entry point (traditional form)</h3>
+<pre><code>namespace HospitalApp.ConsoleApp;
 
-if (int.TryParse(input, out int age))
-    Console.WriteLine($"Age: {age}");</code></pre></section>
-<section><h2>Operators, conditions and branching</h2><ul><li>Arithmetic, comparison, logical, assignment, null-coalescing and conditional operators.</li><li>if/else for conditions; switch and switch expressions for distinct cases.</li><li>Boolean logic, short-circuit evaluation, pattern matching and guard clauses.</li><li>Handle null deliberately; null is not the same as empty string or zero.</li></ul></section>
-<section><h2>Loops and arrays</h2><ul><li>for when index control is needed; foreach for normal collection traversal.</li><li>while and do/while for condition-based repetition.</li><li>break and continue; avoid deeply nested control flow.</li><li>Arrays have fixed length; strings are immutable. StringBuilder helps with repeated large text construction.</li></ul><pre><code>foreach (var patient in patients)
+internal static class Program
 {
-    Console.WriteLine(patient.Name);
-}</code></pre></section>
-<section><h2>Methods and parameters</h2><p>Methods name a unit of work, enable reuse and create testable boundaries. Learn signatures, return values, overloads, optional/named arguments, static versus instance methods, ref/out/in, expression-bodied members and local functions.</p><pre><code>static decimal CalculateTotal(decimal fee, decimal tax)
+    private static void Main(string[] args)
+    {
+        System.Console.WriteLine("HospitalApp starting...");
+    }
+}</code></pre>
+<p>Both forms are valid. Understand the explicit form because older codebases, generated code and some advanced scenarios still use it.</p></section>
+<section><h2>1. Variables and data types</h2>
+<p>A variable is a named storage location with a compile-time type. Types let the compiler reject invalid operations, select the right operations and communicate the meaning of data.</p>
+<h3>Choose a type that matches the business meaning</h3>
+<pre><code>int patientId = 1205;                 // whole-number identifier
+long nationalIdNumber = 123456789012L; // larger whole number
+string patientName = "Amina Khan";
+decimal consultationFee = 1800.50m;   // financial amount
+double temperatureCelsius = 37.2;    // scientific measurement
+bool isRegistered = true;
+char bloodGroup = 'A';
+DateOnly dateOfBirth = new(1995, 4, 12);
+TimeOnly clinicOpens = new(9, 0);
+DateTime createdAtUtc = DateTime.UtcNow;
+Guid requestId = Guid.NewGuid();</code></pre>
+<p>Use <code>decimal</code> for money because decimal fractions such as 0.1 cannot always be represented exactly by binary floating-point. Use <code>double</code> for many scientific calculations where binary floating-point is appropriate. An identifier is not automatically a number: if you never calculate with it, a string may better preserve leading zeros and formatting.</p>
+<h3>Type inference with var</h3>
+<pre><code>var patientCount = 25;             // inferred as int
+var doctorName = "Dr. Sara";       // inferred as string
+var fee = 1250.00m;                // inferred as decimal
+
+// var is still statically typed; it is not dynamic.
+patientCount = 30;
+// patientCount = "thirty";        // compile-time error</code></pre>
+<p>Use <code>var</code> when the right-hand side makes the type obvious, especially with constructors and LINQ. Prefer explicit types when they make important domain meaning clearer.</p>
+<h3>Constants and readonly fields</h3>
+<pre><code>const decimal StandardTaxRate = 0.15m;
+
+public sealed class HospitalSettings
 {
-    return fee + tax;
+    public readonly string HospitalCode;
+
+    public HospitalSettings(string hospitalCode)
+    {
+        HospitalCode = hospitalCode;
+    }
+}</code></pre>
+<p><code>const</code> is a compile-time constant and is implicitly static. <code>readonly</code> fields can be assigned at declaration or in a constructor. For configuration that changes between environments, use configuration options rather than constants.</p>
+<h3>Nullable value types</h3>
+<pre><code>int? assignedDoctorId = null; // appointment not assigned yet
+DateOnly? dischargeDate = null;
+
+if (assignedDoctorId.HasValue)
+{
+    Console.WriteLine(assignedDoctorId.Value);
 }
 
-var total = CalculateTotal(1500m, 225m);</code></pre><p>Pass values into business methods. Do not read directly from TextBox, GridView or HTTP request controls inside domain logic.</p></section>
-<section><h2>HospitalApp practice</h2><ol><li>Create a console menu: register patient, list patients, search by ID, exit.</li><li>Validate names and numeric IDs.</li><li>Extract each operation into a method.</li><li>Keep Console.ReadLine and Console.WriteLine at the UI boundary.</li></ol></section><section><h2>Deep dive: model a patient registration workflow</h2><p>Reception registers a patient. Keep console input/output at the boundary so the same business rules can later serve WebForms, mobile apps or an API.</p><h3>Types represent business meaning</h3><pre><code>int patientId = 1205;
-string mrn = "MR-2026-001205";
-string patientName = "Amina Khan";
-decimal consultationFee = 1800.00m;
-DateOnly dateOfBirth = new(1995, 4, 12);
-bool isActive = true;</code></pre><p>Use decimal for money because binary floating-point types cannot represent every decimal fraction exactly. Keep currency numeric, not formatted text.</p><h3>Validate at the boundary</h3><pre><code>Console.Write("Enter patient age: ");
-string? input = Console.ReadLine();
-if (!int.TryParse(input, out int age) || age is < 0 or > 125)
+int effectiveDoctorId = assignedDoctorId ?? 0;</code></pre>
+<p>Use null to represent “not supplied” only when that is a real business state. Do not silently turn missing values into zero unless zero has a defined meaning.</p>
+<h3>String interpolation, formatting and immutability</h3>
+<pre><code>string patient = "Amina";
+decimal amount = 1800.5m;
+
+string receiptLine = $"Patient: {patient}; Fee: {amount:N2}";
+Console.WriteLine(receiptLine);
+
+string code = "MR-";
+code += "00125"; // creates a new string; strings are immutable</code></pre>
+<p>For a financial receipt, specify culture deliberately at the presentation boundary:</p>
+<pre><code>using System.Globalization;
+
+decimal amount = 1800.50m;
+string display = amount.ToString("N2", CultureInfo.GetCultureInfo("en-PK"));
+Console.WriteLine(display);</code></pre>
+<p>Store the numeric amount in the domain model. Format it as text only when displaying or exporting it.</p></section>
+<section><h2>2. Console input, TryParse and validation</h2>
+<p>Input from a console, form, API or file is untrusted text. Parsing converts text into a typed value; validation checks whether that value is allowed by the business rules. These are separate steps.</p>
+<h3>ReadLine and nullable input</h3>
+<pre><code>Console.Write("Patient name: ");
+string? patientName = Console.ReadLine();
+
+if (string.IsNullOrWhiteSpace(patientName))
 {
-    Console.WriteLine("Enter a valid age between 0 and 125.");
+    Console.WriteLine("Patient name is required.");
     return;
-}</code></pre><p>TryParse handles expected invalid input without using exceptions as normal control flow.</p><h3>Branching and guard clauses</h3><p>An appointment may require an active patient and a future date. Guard clauses reject invalid cases early.</p><pre><code>static bool CanBookAppointment(bool active, DateOnly date)
+}
+
+patientName = patientName.Trim();</code></pre>
+<p><code>ReadLine()</code> can return null when input ends. <code>IsNullOrWhiteSpace</code> catches null, empty and whitespace-only input.</p>
+<h3>Parse safely with TryParse</h3>
+<pre><code>Console.Write("Patient age: ");
+string? ageText = Console.ReadLine();
+
+if (!int.TryParse(ageText, out int age))
 {
-    if (!active) return false;
-    if (date <= DateOnly.FromDateTime(DateTime.Today)) return false;
+    Console.WriteLine("Age must be a whole number.");
+    return;
+}
+
+if (age is < 0 or > 125)
+{
+    Console.WriteLine("Age must be between 0 and 125.");
+    return;
+}
+
+Console.WriteLine($"Validated age: {age}");</code></pre>
+<h3>Parse decimal values with a known culture</h3>
+<pre><code>using System.Globalization;
+
+Console.Write("Consultation fee: ");
+string? feeText = Console.ReadLine();
+
+bool parsed = decimal.TryParse(
+    feeText,
+    NumberStyles.Number,
+    CultureInfo.InvariantCulture,
+    out decimal fee);
+
+if (!parsed || fee < 0)
+{
+    Console.WriteLine("Enter a valid non-negative fee.");
+    return;
+}</code></pre>
+<p>Choose a culture policy for imported data and user interfaces. A web application should normally rely on model binding and explicit request validation rather than manually parsing every field.</p>
+<h3>Reusable validation methods</h3>
+<pre><code>static bool TryValidateAge(int age, out string error)
+{
+    if (age is < 0 or > 125)
+    {
+        error = "Age must be between 0 and 125.";
+        return false;
+    }
+
+    error = string.Empty;
     return true;
-}</code></pre><h3>Methods create testable units</h3><pre><code>static decimal CalculateInvoiceTotal(decimal consultation, decimal lab, decimal discount)
+}
+
+if (int.TryParse("42", out int age) &&
+    TryValidateAge(age, out string error))
 {
+    Console.WriteLine("Age accepted.");
+}
+else
+{
+    Console.WriteLine(error);
+}</code></pre>
+<p>Do not use exceptions for routine invalid user input. Use <code>TryParse</code> and validation results for expected failures; reserve exceptions for exceptional or violated system conditions.</p></section>
+<section><h2>3. Operators, conditions and branching</h2>
+<h3>Arithmetic and comparison</h3>
+<pre><code>decimal consultation = 1800m;
+decimal laboratory = 750m;
+decimal discount = 100m;
+
+decimal total = consultation + laboratory - discount;
+bool isHighValue = total >= 2000m;
+bool hasValidDiscount = discount >= 0m && discount <= consultation + laboratory;
+
+Console.WriteLine(total);             // 2450
+Console.WriteLine(isHighValue);       // True
+Console.WriteLine(hasValidDiscount);  // True</code></pre>
+<h3>Logical operators and short-circuiting</h3>
+<pre><code>bool patientIsActive = true;
+bool doctorIsAvailable = false;
+
+if (patientIsActive && doctorIsAvailable)
+{
+    Console.WriteLine("Appointment can be booked.");
+}
+
+string? patientName = "Amina";
+if (patientName is not null && patientName.Length > 2)
+{
+    Console.WriteLine("Name length is acceptable.");
+}</code></pre>
+<p><code>&amp;&amp;</code> stops when the left side is false; <code>||</code> stops when the left side is true. This is useful for null-safe checks, but keep conditions readable.</p>
+<h3>if / else for ranges and business rules</h3>
+<pre><code>static string GetAgeGroup(int age)
+{
+    if (age < 0) return "Invalid";
+    if (age < 13) return "Child";
+    if (age < 18) return "Adolescent";
+    if (age < 60) return "Adult";
+    return "Senior";
+}
+
+Console.WriteLine(GetAgeGroup(67)); // Senior</code></pre>
+<h3>switch statement for discrete choices</h3>
+<pre><code>string departmentCode = "CARD";
+
+switch (departmentCode)
+{
+    case "CARD":
+        Console.WriteLine("Cardiology");
+        break;
+    case "ORTH":
+        Console.WriteLine("Orthopedics");
+        break;
+    case "ER":
+        Console.WriteLine("Emergency");
+        break;
+    default:
+        Console.WriteLine("Unknown department");
+        break;
+}</code></pre>
+<h3>Conditional operator and null-coalescing</h3>
+<pre><code>decimal payable = discount > 0 ? total - discount : total;
+string doctorDisplay = assignedDoctorName ?? "Not assigned";
+string status = isActive ? "Active" : "Inactive";</code></pre>
+<p>Use the conditional operator for a simple expression. If it becomes nested or hard to scan, use if/else.</p>
+<h3>Guard clauses</h3>
+<pre><code>static decimal CalculateInvoiceTotal(decimal consultation, decimal lab, decimal discount)
+{
+    if (consultation < 0) throw new ArgumentOutOfRangeException(nameof(consultation));
+    if (lab < 0) throw new ArgumentOutOfRangeException(nameof(lab));
     if (discount < 0 || discount > consultation + lab)
         throw new ArgumentOutOfRangeException(nameof(discount));
+
     return consultation + lab - discount;
+}</code></pre>
+<p>Guard clauses reject invalid states early and keep the main calculation uncluttered. The caller should validate ordinary form input before calling this domain method; the method still protects its own invariants.</p></section>
+<section><h2>4. Loops: for, foreach, while and do-while</h2>
+<h3>for when the index matters</h3>
+<pre><code>string[] departments = ["Emergency", "Cardiology", "Pediatrics"];
+
+for (int index = 0; index < departments.Length; index++)
+{
+    Console.WriteLine($"{index + 1}. {departments[index]}");
+}</code></pre>
+<h3>foreach for normal traversal</h3>
+<pre><code>decimal[] dailyCollections = [1200m, 2500m, 1800m];
+decimal totalCollection = 0m;
+
+foreach (decimal collection in dailyCollections)
+{
+    totalCollection += collection;
 }
-var total = CalculateInvoiceTotal(1800m, 750m, 100m); // 2450.00</code></pre><p>The method receives values and returns a result. It does not read a textbox, query SQL Server or print to screen, so it is reusable and unit-testable. Use loops to process changing collections; arrays have fixed length, while List&lt;T&gt; suits patient lists. Strings are immutable; StringBuilder can help with large repeated text construction.</p><h3>Practice task</h3><ol><li>Ask for patient name, age and consultation fee.</li><li>Reject blank names, invalid ages and negative fees.</li><li>Calculate a discount in a separate method.</li><li>Display a receipt and keep calculations separate from console I/O.</li></ol></section>
-<nav class="page-nav"><a href="roadmap.html">← Previous: Roadmap</a><a href="csharp-02.html">Next: 02 · Collections & LINQ →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+
+Console.WriteLine($"Total: {totalCollection:N2}");</code></pre>
+<h3>while for condition-based repetition</h3>
+<pre><code>int attempts = 0;
+bool authenticated = false;
+
+while (!authenticated && attempts < 3)
+{
+    attempts++;
+    Console.WriteLine($"Authentication attempt {attempts}");
+    // Replace this line with an authentication operation.
+    authenticated = attempts == 2;
+}</code></pre>
+<h3>do-while for a menu that must appear once</h3>
+<pre><code>string? choice;
+do
+{
+    Console.WriteLine("1. Register patient");
+    Console.WriteLine("2. Search patient");
+    Console.WriteLine("0. Exit");
+    Console.Write("Choice: ");
+    choice = Console.ReadLine();
+
+    switch (choice)
+    {
+        case "1": Console.WriteLine("Registration selected."); break;
+        case "2": Console.WriteLine("Search selected."); break;
+        case "0": Console.WriteLine("Goodbye."); break;
+        default: Console.WriteLine("Invalid choice."); break;
+    }
+} while (choice != "0");</code></pre>
+<h3>break and continue</h3>
+<pre><code>int[] queueNumbers = [101, 102, 0, 104, 105];
+
+foreach (int number in queueNumbers)
+{
+    if (number == 0) continue; // skip invalid placeholder
+    if (number == 104) break;  // stop at a defined cutoff
+    Console.WriteLine(number);
+}</code></pre>
+<p>Use the loop that best expresses the intent. Avoid changing a collection while iterating it with <code>foreach</code>; use a separate result collection or an appropriate indexed loop when mutation is required.</p></section>
+<section><h2>5. Arrays and multidimensional arrays</h2>
+<p>An array stores a fixed number of elements of one type. Its length cannot grow after creation. Indexes are zero-based.</p>
+<h3>Declare, initialize, read and update</h3>
+<pre><code>int[] patientIds = new int[3];
+patientIds[0] = 1001;
+patientIds[1] = 1002;
+patientIds[2] = 1003;
+
+Console.WriteLine(patientIds[0]); // 1001
+patientIds[1] = 2002;
+
+string[] wards = ["Medical", "Surgical", "Pediatrics"];
+Console.WriteLine(wards.Length);
+Console.WriteLine(wards[^1]); // last element</code></pre>
+<h3>Array traversal and search</h3>
+<pre><code>int[] waitingNumbers = [14, 8, 21, 5];
+
+foreach (int number in waitingNumbers)
+    Console.WriteLine(number);
+
+int position = Array.IndexOf(waitingNumbers, 21);
+Console.WriteLine(position); // 2
+
+Array.Sort(waitingNumbers);
+Array.Reverse(waitingNumbers);</code></pre>
+<h3>Multidimensional array: fixed ward/bed grid</h3>
+<pre><code>// Rows represent wards; columns represent bed positions.
+bool[,] occupied =
+{
+    { true, false, true },
+    { false, false, true }
+};
+
+for (int ward = 0; ward < occupied.GetLength(0); ward++)
+{
+    for (int bed = 0; bed < occupied.GetLength(1); bed++)
+    {
+        Console.WriteLine($"Ward {ward + 1}, Bed {bed + 1}: {occupied[ward, bed]}");
+    }
+}</code></pre>
+<h3>Jagged array: rows with different lengths</h3>
+<pre><code>string[][] doctorShifts =
+[
+    ["Dr. Ali", "Dr. Sara"],
+    ["Dr. Hamza"],
+    ["Dr. Noor", "Dr. Zain", "Dr. Hira"]
+];
+
+foreach (string[] shift in doctorShifts)
+{
+    foreach (string doctor in shift)
+        Console.WriteLine(doctor);
+}</code></pre>
+<p>Use a multidimensional array for a rectangular grid. Use a jagged array when each row can have a different number of elements. For real domain data, named classes are often clearer than arrays with positional meanings.</p></section>
+<section><h2>6. List&lt;T&gt; and collection operations</h2>
+<p>Arrays are fixed-size. <code>List&lt;T&gt;</code> is a resizable generic collection and is the common default for an in-memory sequence that grows or shrinks.</p>
+<h3>Create, add, read, update and remove</h3>
+<pre><code>List<string> patientNames = ["Amina", "Bilal"];
+patientNames.Add("Hassan");
+patientNames.AddRange(["Sara", "Noor"]);
+
+string firstPatient = patientNames[0];
+patientNames[1] = "Bilal Ahmed";
+bool removed = patientNames.Remove("Hassan");
+
+Console.WriteLine($"Count: {patientNames.Count}");
+Console.WriteLine($"Removed: {removed}");
+
+if (patientNames.Count > 0)
+    Console.WriteLine(patientNames[0]);</code></pre>
+<h3>List of domain objects</h3>
+<pre><code>public sealed class Patient
+{
+    public int Id { get; init; }
+    public required string Name { get; init; }
+    public int Age { get; init; }
+}
+
+var patients = new List<Patient>
+{
+    new() { Id = 1, Name = "Amina", Age = 30 },
+    new() { Id = 2, Name = "Bilal", Age = 45 }
+};
+
+Patient? found = patients.Find(p => p.Id == 2);
+if (found is not null)
+    Console.WriteLine(found.Name);</code></pre>
+<h3>Filter and transform with loops (before LINQ)</h3>
+<pre><code>var adults = new List<Patient>();
+
+foreach (Patient patient in patients)
+{
+    if (patient.Age >= 18)
+        adults.Add(patient);
+}
+
+foreach (Patient patient in adults)
+    Console.WriteLine(patient.Name);</code></pre>
+<h3>Capacity, count and safe removal</h3>
+<pre><code>var queue = new List<int>(capacity: 100);
+queue.Add(101);
+queue.Add(102);
+
+Console.WriteLine(queue.Count);    // actual elements
+Console.WriteLine(queue.Capacity); // allocated capacity
+
+queue.RemoveAll(id => id == 101);</code></pre>
+<p><code>Count</code> is the number of elements; <code>Capacity</code> is the current storage allocation. Do not rely on a specific capacity unless you are deliberately tuning performance.</p></section>
+<section><h2>7. IEnumerable&lt;T&gt;, ICollection&lt;T&gt;, IList&lt;T&gt; and IReadOnlyList&lt;T&gt;</h2>
+<p>These interfaces describe capabilities rather than concrete storage. Programming against the smallest useful contract reduces coupling and makes code easier to test.</p>
+<table><thead><tr><th>Type</th><th>What it promises</th><th>Typical use</th></tr></thead><tbody>
+<tr><td><code>IEnumerable&lt;T&gt;</code></td><td>Can be iterated</td><td>Read/stream a sequence</td></tr>
+<tr><td><code>ICollection&lt;T&gt;</code></td><td>Count, add, remove, contains</td><td>Mutable collection contract</td></tr>
+<tr><td><code>IList&lt;T&gt;</code></td><td>Indexed access and mutation</td><td>Ordered, indexable mutable list</td></tr>
+<tr><td><code>IReadOnlyList&lt;T&gt;</code></td><td>Count and indexed read access</td><td>Expose a read-only list contract</td></tr>
+</tbody></table>
+<h3>Accept IEnumerable when only iteration is needed</h3>
+<pre><code>static void PrintPatientNames(IEnumerable<Patient> patients)
+{
+    foreach (Patient patient in patients)
+        Console.WriteLine(patient.Name);
+}
+
+PrintPatientNames(patients);
+PrintPatientNames(patients.Where(p => p.Age >= 18));</code></pre>
+<h3>Return a read-only contract</h3>
+<pre><code>public sealed class PatientDirectory
+{
+    private readonly List<Patient> _patients = [];
+
+    public void Add(Patient patient) => _patients.Add(patient);
+
+    public IReadOnlyList<Patient> GetAll() => _patients.AsReadOnly();
+}</code></pre>
+<p><code>IReadOnlyList&lt;T&gt;</code> prevents callers from using list mutation members through that reference, but it is not a deep immutable snapshot. The underlying list can still change inside the owning class. If callers need a stable snapshot, return a copy.</p>
+<h3>Why not always use List&lt;T&gt;?</h3>
+<pre><code>// More flexible: caller can pass an array, List or LINQ query.
+static int CountActivePatients(IEnumerable<Patient> source)
+    => source.Count(p => p.Age > 0);
+
+// More restrictive: requires indexed read access.
+static Patient? GetAt(IReadOnlyList<Patient> source, int index)
+    => index >= 0 && index < source.Count ? source[index] : null;</code></pre></section>
+<section><h2>8. Dictionary, HashSet, Queue and Stack</h2>
+<h3>Dictionary&lt;TKey,TValue&gt;: fast lookup by key</h3>
+<pre><code>var patientById = new Dictionary<int, string>
+{
+    [1001] = "Amina",
+    [1002] = "Bilal"
+};
+
+patientById[1003] = "Sara"; // add or replace
+if (patientById.TryGetValue(1002, out string? name))
+    Console.WriteLine(name);
+
+bool exists = patientById.ContainsKey(1001);
+patientById.Remove(1003);</code></pre>
+<p>Use <code>TryGetValue</code> when a key may not exist. Avoid checking <code>ContainsKey</code> and then indexing, because that performs two lookups and still leaves a time window for concurrent mutation.</p>
+<h3>HashSet&lt;T&gt;: uniqueness and membership</h3>
+<pre><code>var registeredMrns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+registeredMrns.Add("MR-001");
+registeredMrns.Add("mr-001"); // duplicate under this comparer
+
+Console.WriteLine(registeredMrns.Count); // 1
+Console.WriteLine(registeredMrns.Contains("MR-001"));</code></pre>
+<h3>Set operations</h3>
+<pre><code>var cardiologyDoctors = new HashSet<int> { 1, 2, 3 };
+var onCallDoctors = new HashSet<int> { 2, 3, 4 };
+
+var availableForBoth = cardiologyDoctors.Intersect(onCallDoctors);
+var allRelevant = cardiologyDoctors.Union(onCallDoctors);
+var notOnCall = cardiologyDoctors.Except(onCallDoctors);</code></pre>
+<h3>Queue&lt;T&gt;: first-in, first-out</h3>
+<pre><code>var receptionQueue = new Queue<string>();
+receptionQueue.Enqueue("Patient A");
+receptionQueue.Enqueue("Patient B");
+receptionQueue.Enqueue("Patient C");
+
+if (receptionQueue.TryDequeue(out string? nextPatient))
+    Console.WriteLine($"Call next: {nextPatient}");
+
+if (receptionQueue.TryPeek(out string? waiting))
+    Console.WriteLine($"Next waiting: {waiting}");</code></pre>
+<h3>Stack&lt;T&gt;: last-in, first-out</h3>
+<pre><code>var navigationHistory = new Stack<string>();
+navigationHistory.Push("Dashboard");
+navigationHistory.Push("Patients");
+navigationHistory.Push("PatientDetails");
+
+string current = navigationHistory.Pop(); // PatientDetails
+string previous = navigationHistory.Peek(); // Patients</code></pre>
+<p>These are in-memory data structures, not durable queues or databases. A hospital's real appointment queue must account for persistence, multiple application instances, concurrency, cancellation and audit history.</p></section>
+<section><h2>Integrated practice: reception registration console</h2>
+<p>This compact example combines input validation, methods, a list, search and a menu. It is an educational in-memory sample; it does not persist data after the process exits.</p>
+<pre><code>public sealed record PatientRecord(int Id, string Name, int Age);
+
+var patients = new List<PatientRecord>();
+int nextId = 1;
+bool running = true;
+
+while (running)
+{
+    Console.WriteLine("\n1 Register  2 List  3 Search  0 Exit");
+    Console.Write("Choice: ");
+    string? choice = Console.ReadLine();
+
+    switch (choice)
+    {
+        case "1":
+            Console.Write("Name: ");
+            string? name = Console.ReadLine();
+
+            Console.Write("Age: ");
+            string? ageText = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(name) ||
+                !int.TryParse(ageText, out int age) ||
+                age is < 0 or > 125)
+            {
+                Console.WriteLine("Invalid patient details.");
+                break;
+            }
+
+            patients.Add(new PatientRecord(nextId++, name.Trim(), age));
+            Console.WriteLine("Patient registered.");
+            break;
+
+        case "2":
+            foreach (PatientRecord patient in patients)
+                Console.WriteLine($"{patient.Id} | {patient.Name} | {patient.Age}");
+            break;
+
+        case "3":
+            Console.Write("Patient ID: ");
+            if (int.TryParse(Console.ReadLine(), out int id))
+            {
+                PatientRecord? match = patients.Find(p => p.Id == id);
+                Console.WriteLine(match is null
+                    ? "Patient not found."
+                    : $"{match.Id} | {match.Name} | {match.Age}");
+            }
+            else
+            {
+                Console.WriteLine("Enter a numeric ID.");
+            }
+            break;
+
+        case "0":
+            running = false;
+            break;
+
+        default:
+            Console.WriteLine("Unknown option.");
+            break;
+    }
+}</code></pre>
+<p>In a larger application, move this code into separate UI, application and domain types. Keep the console responsible for input/output; keep validation and business rules in methods that accept ordinary values and can be tested without simulating a keyboard.</p></section>
+<section><h2>Common mistakes to avoid</h2><ul>
+<li>Using <code>double</code> for money and then discovering rounding surprises.</li>
+<li>Assuming user input is valid because a textbox or console prompt requested a number.</li>
+<li>Using <code>Parse</code> for expected invalid input instead of <code>TryParse</code>.</li>
+<li>Confusing array <code>Length</code>, collection <code>Count</code> and list <code>Capacity</code>.</li>
+<li>Using a list when a set or dictionary better expresses uniqueness or keyed lookup.</li>
+<li>Putting SQL queries, UI controls and business calculations in one method.</li>
+<li>Returning mutable internal collections and allowing callers to change application state.</li>
+<li>Using exceptions as ordinary branching for expected validation failures.</li>
+</ul></section>
+<section><h2>Practice exercises</h2><ol>
+<li>Build a patient registration prompt that validates name, age, phone number and date of birth.</li>
+<li>Store 10 patients in a <code>List&lt;PatientRecord&gt;</code>; search by ID and MRN.</li>
+<li>Use a <code>Dictionary&lt;int, PatientRecord&gt;</code> to look up patients by ID.</li>
+<li>Use a <code>HashSet&lt;string&gt;</code> to reject duplicate MRNs, ignoring letter casing.</li>
+<li>Build a reception queue using <code>Queue&lt;PatientRecord&gt;</code>; enqueue, peek and dequeue safely.</li>
+<li>Write a method that accepts <code>IEnumerable&lt;PatientRecord&gt;</code> and calculates the average age.</li>
+<li>Refactor the integrated example so input, validation, storage and display are separate methods.</li>
+</ol></section>
+<nav class="page-nav"><a href="roadmap.html">← Previous: Roadmap</a><a href="csharp-02.html">Next: 02 · Collections & LINQ →</a></nav>
+<footer>C# language reference · C# 14 / .NET 10 · HospitalApp examples</footer>
+</article></main></body></html>
