@@ -7,4 +7,117 @@
 <section><h2>Practical checkpoints</h2><ul><li>Distinguish compiler errors from runtime exceptions.</li><li>Explain source → IL/assembly → JIT/native execution.</li><li>Know why IDisposable is required in a garbage-collected runtime.</li><li>Inspect project dependencies and deployment output.</li></ul></section><section><h2>Deep dive: what happens when HospitalApp runs?</h2><p>C# is the language; .NET is the platform, runtime and library ecosystem. This distinction helps diagnose startup, deployment, memory and performance issues.</p><h3>Compilation pipeline</h3><ol><li>Roslyn parses C# and checks types.</li><li>The compiler emits Intermediate Language and metadata into assemblies.</li><li>The runtime loads assemblies and resolves dependencies.</li><li>JIT compiles IL to native machine code as needed; supported AOT deployments compile ahead of time.</li></ol><pre><code>dotnet new console -n HospitalApp.Console
 dotnet build
 dotnet run</code></pre><h3>CLR, CTS and assemblies</h3><p>The Common Language Runtime manages execution services such as type safety, exceptions, garbage collection and threading. The Common Type System defines how types are represented across .NET languages. An assembly is a deployment/versioning unit containing IL and metadata.</p><h3>Garbage collection</h3><p>GC reclaims managed objects that are no longer reachable. It does not promptly close every external resource. Dispose files, sockets and database connections with using; GC is not a substitute for deterministic disposal.</p><h3>Hosting and configuration</h3><p>ASP.NET Core hosting configures dependency injection, logging, configuration and application lifetime. Development, test and production should use separate settings. Keep secrets outside source control and restrict production access.</p><h3>Diagnostics</h3><ul><li>dotnet --info inspects SDK/runtime installations.</li><li>Use structured logs and correlation IDs to trace an appointment request.</li><li>Profile CPU and allocations before optimizing.</li><li>Record runtime, OS, configuration and deployment mode when diagnosing environment-specific failures.</li></ul></section>
-<nav class="page-nav"><a href="csharp-07.html">← Previous: 07 · Delegates & Async</a><a href="testing.html">Next: 09 · Testing →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<nav class="page-nav"><a href="csharp-07.html">← Previous: 07 · Delegates & Async</a><a href="testing.html">Next: 09 · Testing →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer><section><h2>Worked examples: the .NET platform</h2>
+<h3>Inspect the installed SDK and runtime</h3>
+<pre><code>dotnet --info
+dotnet --list-sdks
+dotnet --list-runtimes</code></pre>
+<p>The SDK is the developer toolchain used to restore, build, test and publish. A runtime executes applications. A machine may have multiple SDK and runtime versions installed side by side.</p>
+<h3>Understand an SDK-style project file</h3>
+<pre><code>&lt;Project Sdk="Microsoft.NET.Sdk"&gt;
+  &lt;PropertyGroup&gt;
+    &lt;OutputType&gt;Exe&lt;/OutputType&gt;
+    &lt;TargetFramework&gt;net10.0&lt;/TargetFramework&gt;
+    &lt;ImplicitUsings&gt;enable&lt;/ImplicitUsings&gt;
+    &lt;Nullable&gt;enable&lt;/Nullable&gt;
+    &lt;TreatWarningsAsErrors&gt;true&lt;/TreatWarningsAsErrors&gt;
+  &lt;/PropertyGroup&gt;
+&lt;/Project&gt;</code></pre>
+<p>The target framework controls the reference APIs and runtime target. Nullable analysis and warnings-as-errors help enforce code quality at build time. Choose settings deliberately for the repository and its migration strategy.</p>
+<h3>Restore, build, test and publish</h3>
+<pre><code>dotnet restore
+dotnet build --configuration Release --no-restore
+dotnet test --configuration Release --no-build
+dotnet publish --configuration Release --output ./publish</code></pre>
+<p><code>restore</code> resolves NuGet dependencies; <code>build</code> compiles; <code>test</code> runs test projects; <code>publish</code> creates deployment output. A production pipeline should build and test a known commit, then deploy the same published artifact.</p>
+<h3>Manage NuGet dependencies</h3>
+<pre><code>dotnet add package Microsoft.Extensions.Logging.Console
+dotnet list package
+dotnet remove package Microsoft.Extensions.Logging.Console</code></pre>
+<p>Review package ownership, maintenance, licensing, vulnerability advisories and transitive dependencies. Pin versions centrally when managing a multi-project solution.</p>
+<h3>Dispose unmanaged resources deterministically</h3>
+<pre><code>string path = "daily-report.txt";
+
+await using (var stream = new FileStream(
+    path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None,
+    bufferSize: 4096, useAsync: true))
+await using (var writer = new StreamWriter(stream))
+{
+    await writer.WriteLineAsync("Hospital daily report");
+}</code></pre>
+<p>Garbage collection manages memory, not the timely release of operating-system handles. <code>using</code> calls <code>Dispose</code>; <code>await using</code> calls <code>DisposeAsync</code> for asynchronous cleanup.</p>
+<h3>Implement IDisposable for owned resources</h3>
+<pre><code>public sealed class ReportFileWriter(string path) : IDisposable
+{
+    private readonly StreamWriter _writer = new(path, append: true);
+    private bool _disposed;
+
+    public void Write(string line)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        _writer.WriteLine(line);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _writer.Dispose();
+        _disposed = true;
+    }
+}
+
+using var report = new ReportFileWriter("audit.txt");
+report.Write("Patient registered");</code></pre>
+<p>In production code, prefer standard stream/file abstractions when they already provide the required lifetime management. Implement disposal only when your type owns disposable resources.</p>
+<h3>Generic Host in a console application</h3>
+<pre><code>using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
+var builder = Host.CreateApplicationBuilder(args);
+builder.Services.AddSingleton&lt;PatientImportService&gt;();
+
+using IHost host = builder.Build();
+
+var importer = host.Services.GetRequiredService&lt;PatientImportService&gt;();
+await importer.RunAsync();
+
+public sealed class PatientImportService(ILogger&lt;PatientImportService&gt; logger)
+{
+    public Task RunAsync()
+    {
+        logger.LogInformation("Patient import started at {Time}", DateTimeOffset.UtcNow);
+        return Task.CompletedTask;
+    }
+}</code></pre>
+<p>The Generic Host provides dependency injection, logging, configuration and application lifetime to console and worker applications. ASP.NET Core builds on related hosting abstractions and adds HTTP server/request pipeline behavior.</p>
+<h3>Configuration providers in a console app</h3>
+<pre><code>var builder = Host.CreateApplicationBuilder(args);
+
+// appsettings.json, environment-specific JSON, environment variables
+// and command-line configuration are loaded by host defaults.
+string hospitalName = builder.Configuration["Hospital:Name"] ?? "Unknown";
+Console.WriteLine(hospitalName);</code></pre>
+<h3>GC and allocation observation</h3>
+<pre><code>long before = GC.GetTotalAllocatedBytes(precise: true);
+
+for (int i = 0; i < 100_000; i++)
+{
+    _ = new PatientSummary(i, $"Patient {i}");
+}
+
+long allocated = GC.GetTotalAllocatedBytes(precise: true) - before;
+Console.WriteLine($"Allocated approximately {allocated:N0} bytes");
+
+public sealed record PatientSummary(int Id, string Name);</code></pre>
+<p>This is a simple diagnostic illustration, not a reliable benchmark. Use BenchmarkDotNet for repeatable microbenchmarks and runtime diagnostics tools for real application behavior. Do not call <code>GC.Collect()</code> as a routine performance fix.</p>
+<h3>Inspect runtime and deployment output</h3>
+<pre><code>dotnet publish -c Release -o ./artifacts
+# Framework-dependent execution:
+dotnet HospitalApp.Console.dll
+
+# Self-contained publishing requires a runtime identifier, e.g.:
+dotnet publish -c Release -r win-x64 --self-contained true</code></pre>
+<p>Framework-dependent deployment expects a compatible shared runtime on the host. Self-contained deployment includes the runtime for a selected platform and increases artifact size. Native AOT has additional compatibility constraints; verify reflection, dynamic code and package support before selecting it.</p>
+<h3>Practice</h3><ol><li>Create a two-project solution and reference one project from another.</li><li>Inspect SDK/runtime versions on your development machine and deployment server.</li><li>Use the Generic Host in HospitalApp.Console and register one application service.</li><li>Publish framework-dependent and self-contained builds and compare outputs.</li><li>Use a profiler before attempting to optimize allocations.</li></ol>
+</section></article></main></body></html>
