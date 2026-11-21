@@ -18,4 +18,27 @@ if (int.TryParse(input, out int age))
 }
 
 var total = CalculateTotal(1500m, 225m);</code></pre><p>Pass values into business methods. Do not read directly from TextBox, GridView or HTTP request controls inside domain logic.</p></section>
-<section><h2>HospitalApp practice</h2><ol><li>Create a console menu: register patient, list patients, search by ID, exit.</li><li>Validate names and numeric IDs.</li><li>Extract each operation into a method.</li><li>Keep Console.ReadLine and Console.WriteLine at the UI boundary.</li></ol></section><nav class="page-nav"><a href="roadmap.html">← Previous: Roadmap</a><a href="csharp-02.html">Next: 02 · Collections & LINQ →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
+<section><h2>HospitalApp practice</h2><ol><li>Create a console menu: register patient, list patients, search by ID, exit.</li><li>Validate names and numeric IDs.</li><li>Extract each operation into a method.</li><li>Keep Console.ReadLine and Console.WriteLine at the UI boundary.</li></ol></section><section><h2>Deep dive: model a patient registration workflow</h2><p>Reception registers a patient. Keep console input/output at the boundary so the same business rules can later serve WebForms, mobile apps or an API.</p><h3>Types represent business meaning</h3><pre><code>int patientId = 1205;
+string mrn = "MR-2026-001205";
+string patientName = "Amina Khan";
+decimal consultationFee = 1800.00m;
+DateOnly dateOfBirth = new(1995, 4, 12);
+bool isActive = true;</code></pre><p>Use decimal for money because binary floating-point types cannot represent every decimal fraction exactly. Keep currency numeric, not formatted text.</p><h3>Validate at the boundary</h3><pre><code>Console.Write("Enter patient age: ");
+string? input = Console.ReadLine();
+if (!int.TryParse(input, out int age) || age is < 0 or > 125)
+{
+    Console.WriteLine("Enter a valid age between 0 and 125.");
+    return;
+}</code></pre><p>TryParse handles expected invalid input without using exceptions as normal control flow.</p><h3>Branching and guard clauses</h3><p>An appointment may require an active patient and a future date. Guard clauses reject invalid cases early.</p><pre><code>static bool CanBookAppointment(bool active, DateOnly date)
+{
+    if (!active) return false;
+    if (date <= DateOnly.FromDateTime(DateTime.Today)) return false;
+    return true;
+}</code></pre><h3>Methods create testable units</h3><pre><code>static decimal CalculateInvoiceTotal(decimal consultation, decimal lab, decimal discount)
+{
+    if (discount < 0 || discount > consultation + lab)
+        throw new ArgumentOutOfRangeException(nameof(discount));
+    return consultation + lab - discount;
+}
+var total = CalculateInvoiceTotal(1800m, 750m, 100m); // 2450.00</code></pre><p>The method receives values and returns a result. It does not read a textbox, query SQL Server or print to screen, so it is reusable and unit-testable. Use loops to process changing collections; arrays have fixed length, while List&lt;T&gt; suits patient lists. Strings are immutable; StringBuilder can help with large repeated text construction.</p><h3>Practice task</h3><ol><li>Ask for patient name, age and consultation fee.</li><li>Reject blank names, invalid ages and negative fees.</li><li>Calculate a discount in a separate method.</li><li>Display a receipt and keep calculations separate from console I/O.</li></ol></section>
+<nav class="page-nav"><a href="roadmap.html">← Previous: Roadmap</a><a href="csharp-02.html">Next: 02 · Collections & LINQ →</a></nav><footer>Personal developer reference · Follow the roadmap in sequence</footer></article></main></body></html>
