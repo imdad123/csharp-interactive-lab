@@ -1,0 +1,34 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASP.NET Core API integrations and real-time | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">API</span><span>ASP.NET Core <strong>Backend Reference</strong></span></a><span class="top-note">ASP.NET Core · Hospital HMS</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">ASP.NET CORE</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="../csharp.html">C# Language</a><a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="roadmap.html">Complete roadmap</a><a class="nav-link " href="guide-prerequisites.html">Prerequisites</a><a class="nav-link " href="guide-web.html">Web fundamentals</a><a class="nav-link " href="guide-data.html">Data and ORM</a><a class="nav-link " href="guide-platform.html">DI, logging, cloud</a><a class="nav-link active" href="guide-communication.html">API and real-time</a><a class="nav-link " href="guide-workers.html">Background and messaging</a><a class="nav-link " href="guide-testing.html">Testing and CI/CD</a><a class="nav-link " href="guide-architecture.html">Architecture and ecosystem</a><a class="nav-link" href="../sql/index.html">SQL & Databases</a><a class="nav-link" href="../engineering/cicd.html">CI/CD & Cloud</a></aside><article class="content"><p class="eyebrow">DETAILED REFERENCE GUIDE</p><h1>ASP.NET Core API integrations and real-time</h1><p class="lead">Concept, purpose, code examples and production considerations with hospital application scenarios.</p><section><h2>Typed HTTP clients and IHttpClientFactory</h2><p>Use IHttpClientFactory or typed clients to manage handler lifetimes, centralized configuration and resilience. Apply timeouts and cancellation; retry only operations safe to retry.</p><pre><code>builder.Services.AddHttpClient&lt;LaboratoryClient&gt;(client =&gt;
+{
+ client.BaseAddress = new Uri(builder.Configuration["LabApi:BaseUrl"]!);
+ client.Timeout = TimeSpan.FromSeconds(10);
+});
+public sealed class LaboratoryClient(HttpClient http)
+{
+ public Task&lt;LabResult?&gt; GetAsync(string id, CancellationToken ct)
+  =&gt; http.GetFromJsonAsync&lt;LabResult&gt;($"api/results/{Uri.EscapeDataString(id)}", ct);
+}</code></pre></section>,<section><h2>GraphQL and GraphQL.NET / Hot Chocolate</h2><p>GraphQL exposes a typed schema where clients select fields. Hot Chocolate is a common .NET GraphQL server; GraphQL.NET is another implementation. Apply authorization and query depth/complexity limits.</p><pre><code>builder.Services.AddGraphQLServer().AddQueryType&lt;PatientQueries&gt;();
+app.MapGraphQL("/graphql");</code></pre></section>,<section><h2>OData</h2><p>OData exposes standardized filtering, sorting and selection. Limit query options and page sizes so clients cannot generate unbounded expensive database work.</p><pre><code>[EnableQuery(PageSize = 50)]
+public IQueryable&lt;PatientDto&gt; Get()
+ =&gt; db.Patients.Select(p =&gt; new PatientDto(p.Id, p.Mrn, p.FullName));</code></pre></section>,<section><h2>gRPC and Protocol Buffers</h2><p>gRPC uses Protocol Buffers contracts over HTTP/2 for strongly typed service-to-service communication and streaming. Evolve contracts compatibly and never reuse removed field numbers.</p><pre><code>syntax = "proto3";
+service PatientDirectory { rpc GetPatient (PatientRequest) returns (PatientReply); }
+message PatientRequest { int32 id = 1; }
+message PatientReply { int32 id = 1; string name = 2; }</code></pre></section>,<section><h2>REST API versioning and OpenAPI</h2><p>OpenAPI describes the API contract for clients, generated SDKs and testing. Version endpoints intentionally and keep documentation aligned with runtime behavior.</p><pre><code>builder.Services.AddOpenApi();
+var app = builder.Build();
+app.MapOpenApi();
+// Publish the generated OpenAPI document with your API release.</code></pre></section>,<section><h2>Manual mapping, AutoMapper and Mapperly</h2><p>Mapping translates domain/persistence objects into public DTOs. Manual mapping is explicit; AutoMapper uses runtime conventions; Mapperly generates code at compile time. Keep business rules out of mapping.</p><pre><code>public sealed record PatientResponse(int Id, string Name);
+static PatientResponse Map(Patient entity)
+ =&gt; new(entity.Id, entity.FullName);</code></pre></section>,<section><h2>WebSockets</h2><p>WebSockets provide persistent bidirectional communication. They are lower-level than SignalR and require explicit connection lifecycle, framing, cancellation and message-size handling.</p><pre><code>app.UseWebSockets();
+app.Map("/ws", async context =&gt;
+{
+ if (!context.WebSockets.IsWebSocketRequest) { context.Response.StatusCode = 400; return; }
+ using var socket = await context.WebSockets.AcceptWebSocketAsync();
+ // Receive frames with cancellation and size limits.
+});</code></pre></section>,<section><h2>SignalR Core</h2><p>SignalR provides hubs and client libraries for real-time server/client communication. It can use WebSockets and fallback transports; multi-instance deployments need scale-out support.</p><pre><code>builder.Services.AddSignalR();
+app.MapHub&lt;AppointmentHub&gt;("/hubs/appointments");
+public sealed class AppointmentHub : Hub
+{
+ public Task JoinWard(string ward) =&gt; Groups.AddToGroupAsync(Context.ConnectionId, ward);
+}</code></pre></section>,<section><h2>API security and authorization</h2><p>Protect each operation at the resource level, validate tenant/patient ownership, apply rate limits and avoid trusting client-supplied identifiers without authorization checks.</p><pre><code>[Authorize(Policy = "Patient.Read")]
+[HttpGet("{id:int}")]
+public Task&lt;ActionResult&lt;PatientDto&gt;&gt; Get(int id, CancellationToken ct) =&gt; ...;</code></pre></section><footer>Programming Academy · ASP.NET Core reference</footer></article></main></body></html>
