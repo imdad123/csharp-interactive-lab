@@ -1,0 +1,25 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PHP Database Engineering</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">PHP</span><span>PHP <strong>Database</strong></span></a><span class="top-note">PDO · SQL Server / MySQL</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">PHP ROADMAP</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">PHP Overview</a><a class="nav-link" href="roadmap.html">Roadmap</a><a class="nav-link" href="fundamentals.html">01 · Fundamentals</a><a class="nav-link" href="oop.html">02 · OOP</a><a class="nav-link active" href="database.html">03 · Database</a><a class="nav-link" href="web-api.html">04 · Web & APIs</a><a class="nav-link" href="security-testing.html">05 · Security & Testing</a></aside><article class="content"><p class="eyebrow">PHP · MODULE 03</p><h1>Database engineering with PDO</h1><p class="lead">A hospital application stores important facts: patients, doctors, appointments, invoices and payments. Database access must be secure, consistent and predictable.</p><h2>Connect with PDO</h2><pre><code>$pdo = new PDO($dsn, $username, $password, [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES => false,
+]);</code></pre><p>Keep credentials outside source control. Configure connection timeouts and TLS appropriately for your database server.</p><h2>Prepared statements prevent SQL injection</h2><pre><code>$statement = $pdo->prepare(
+    'SELECT PatientId, PatientName FROM Patients WHERE PatientId = :id'
+);
+$statement->execute(['id' => $patientId]);
+$patient = $statement->fetch();</code></pre><p>Never build SQL by concatenating patient-provided values. Placeholders bind values, not table or column names; dynamic identifiers must come from a strict allow-list.</p><h2>Transactions protect billing consistency</h2><pre><code>try {
+    $pdo->beginTransaction();
+    $header = $pdo->prepare(
+        'INSERT INTO Invoices (PatientId, TotalAmount) VALUES (:patient, :total)'
+    );
+    $header->execute(['patient' => $patientId, 'total' => $total]);
+    $invoiceId = (int) $pdo->lastInsertId();
+
+    $line = $pdo->prepare(
+        'INSERT INTO InvoiceLines (InvoiceId, Description, Amount) VALUES (:id, :description, :amount)'
+    );
+    $line->execute(['id' => $invoiceId, 'description' => 'Consultation', 'amount' => $fee]);
+    $pdo->commit();
+} catch (Throwable $exception) {
+    if ($pdo->inTransaction()) $pdo->rollBack();
+    throw $exception;
+}</code></pre><p>Use transactions when invoice header, lines and accounting entries form one business operation. Validate totals and handle concurrency deliberately.</p><h2>Repositories and query design</h2><p>A repository can encapsulate patient persistence, but do not create abstractions that merely rename every PDO call. Keep query intent clear, select only required columns, paginate large result sets and index real search predicates. Avoid N+1 query patterns when listing appointments with related doctors.</p><h2>Practice task</h2><ol><li>Design Patients, Doctors and Appointments tables.</li><li>Implement parameterized patient search.</li><li>Build invoice posting with transaction and rollback.</li><li>Paginate appointment history.</li><li>Test duplicate MRN and concurrent booking conflicts.</li></ol></section><nav class="page-nav"><a href="oop.html">← OOP</a><a href="web-api.html">Next: Web & APIs →</a></nav><footer>PHP track · Database engineering</footer></article></main></body></html>
