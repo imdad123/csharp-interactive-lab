@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASP.NET Core Testing & Deployment | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head><body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">API</span><span>ASP.NET Core <strong>Quality & Delivery</strong></span></a><span class="top-note">xUnit · Integration · CI/CD</span></header><main class="shell"><aside class="sidebar"><p class="eyebrow">ASP.NET CORE</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="../csharp.html">C# Language</a><a class="nav-link" href="index.html">ASP.NET Core Overview</a><a class="nav-link" href="roadmap.html">ASP.NET Core Roadmap</a><a class="nav-link" href="fundamentals.html">Hosting & Fundamentals</a><a class="nav-link" href="apis.html">HTTP APIs, REST & MVC</a><a class="nav-link" href="middleware.html">Middleware, Filters & Config</a><a class="nav-link" href="data.html">EF Core & Data Access</a><a class="nav-link" href="di-caching-logging.html">DI, Caching & Logging</a><a class="nav-link" href="realtime-background.html">Real-time & Background Jobs</a><a class="nav-link active" href="testing-deployment.html">Testing & Deployment</a></aside><article class="content"><p class="eyebrow">TOPIC GUIDE</p><h1>Testing and deployment</h1>
+<section><h2>1. Unit tests vs integration tests</h2><p>Unit tests isolate a small unit such as a domain rule or service. Integration tests verify that multiple components work together, for example routing, dependency injection, serialization and a database provider. End-to-end tests exercise a user workflow through a running application and browser.</p><pre><code>public sealed class InvoiceCalculator
+{
+    public decimal Total(decimal consultation, decimal lab, decimal discount)
+    {
+        if (consultation < 0 || lab < 0 || discount < 0 ||
+            discount > consultation + lab)
+            throw new ArgumentOutOfRangeException();
+
+        return consultation + lab - discount;
+    }
+}
+
+// xUnit
+public sealed class InvoiceCalculatorTests
+{
+    [Fact]
+    public void Total_SubtractsDiscount()
+    {
+        var calculator = new InvoiceCalculator();
+
+        decimal total = calculator.Total(1800m, 750m, 100m);
+
+        Assert.Equal(2450m, total);
+    }
+}</code></pre></section>
+<section><h2>2. Test an HTTP endpoint with WebApplicationFactory</h2><p>Install the ASP.NET Core MVC testing package that matches the target framework. Keep test host configuration separate from production configuration.</p><pre><code>public sealed class PatientsApiTests
+    : IClassFixture&lt;WebApplicationFactory&lt;Program&gt;&gt;
+{
+    private readonly HttpClient _client;
+
+    public PatientsApiTests(WebApplicationFactory&lt;Program&gt; factory)
+    {
+        _client = factory.CreateClient();
+    }
+
+    [Fact]
+    public async Task HealthEndpoint_ReturnsSuccess()
+    {
+        using HttpResponseMessage response =
+            await _client.GetAsync("/health");
+
+        Assert.True(response.IsSuccessStatusCode);
+    }
+}</code></pre><p>For top-level Program projects, expose the generated Program type to the test assembly when needed (for example with <code>public partial class Program { }</code> in the API project). Integration tests should use isolated test data and never connect to production.</p></section>
+<section><h2>3. Test database choices</h2><ul><li>Use a real disposable relational database for tests that depend on SQL translation, constraints, transactions or provider behavior.</li><li>Testcontainers can provision disposable dependencies such as SQL Server, PostgreSQL or Redis where supported.</li><li>Respawn can reset database state between tests.</li><li>EF Core InMemory is not a relational database and does not accurately model relational constraints or SQL translation.</li></ul></section>
+<section><h2>4. Browser and end-to-end testing</h2><p>Playwright, Puppeteer and Cypress automate browser workflows. Use them for important user journeys such as receptionist registration, appointment booking and invoice payment. Keep most business-rule tests at unit/integration level because browser tests are slower and more fragile.</p></section>
+<section><h2>5. Dockerize the API</h2><pre><code>FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+EXPOSE 8080
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY . .
+RUN dotnet publish src/Hospital.Api/Hospital.Api.csproj -c Release -o /out
+
+FROM runtime AS final
+WORKDIR /app
+COPY --from=build /out .
+ENTRYPOINT ["dotnet", "Hospital.Api.dll"]</code></pre><p>Adjust project paths to match the actual solution. Run as a non-root user where supported, use a small trusted base image, pin and regularly update images, and inject secrets at runtime rather than baking them into layers.</p></section>
+<section><h2>6. CI/CD pipeline outline</h2><pre><code>dotnet restore
+dotnet format --verify-no-changes
+dotnet build --configuration Release --no-restore
+dotnet test --configuration Release --no-build
+dotnet publish src/Hospital.Api/Hospital.Api.csproj -c Release -o ./artifacts/publish</code></pre><p>Build once and promote the same artifact through environments. Run database migrations as a controlled deployment step. Use health checks, rollback strategy, secrets management and monitoring.</p></section>
+<section><h2>7. Production checklist</h2><ul><li>HTTPS and secure proxy configuration.</li><li>Authentication and authorization policies on sensitive endpoints.</li><li>Request validation, rate limiting and safe error responses.</li><li>Database indexes, bounded pagination and query performance checks.</li><li>Structured logs, metrics, tracing and health checks.</li><li>Backups, restore drills, migration strategy and audit history.</li><li>Secrets outside source control; least-privilege identities.</li><li>CI pipeline, integration tests and repeatable deployment.</li></ul></section>
+<nav class="page-nav"><a href="realtime-background.html">← Real-time & Background</a><a href="index.html">ASP.NET Core Overview →</a></nav><footer>ASP.NET Core · Testing and production delivery</footer></article></main></body></html>
