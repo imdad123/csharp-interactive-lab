@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Python Async Programming"><title>Python Async Programming | Programming Academy</title><link rel="stylesheet" href="../styles.css"></head>
+<body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">PY</span><span>Python Engineering</span></a><span class="top-note">asyncio · TaskGroup · concurrency</span></header>
+<main class="shell"><aside class="sidebar"><p class="eyebrow">REFERENCE NAVIGATION</p><a class="nav-link" href="../index.html">Academy Home</a><a class="nav-link" href="index.html">Python Overview</a><a class="nav-link" href="roadmap.html">Roadmap</a><a class="nav-link" href="fundamentals.html">Language fundamentals</a><a class="nav-link" href="collections.html">Collections & iteration</a><a class="nav-link" href="oop.html">OOP & typing</a><a class="nav-link" href="async.html">Async & concurrency</a><a class="nav-link" href="web-api.html">FastAPI & APIs</a><a class="nav-link" href="testing.html">Testing</a><a class="nav-link" href="production.html">Production engineering</a><a class="nav-link" href="../sql/index.html">SQL &amp; Databases</a><a class="nav-link" href="../git/index.html">Git &amp; GitHub</a><a class="nav-link" href="../engineering/index.html">CI/CD &amp; Cloud</a><a class="nav-link" href="../engineering/github.html">GitHub workflow guide</a><div class="sidebar-note"><strong>Reference approach</strong><p>Concept → syntax → multiple HMS examples → edge cases → professional practice → tests.</p></div></aside><article class="content"><p class="eyebrow">PYTHON REFERENCE</p><h1>Async programming and concurrency</h1><p class="lead">Understand asyncio, concurrent tasks, cancellation, threads and process pools.</p><section><h2>Async I/O with asyncio</h2><pre><code>import asyncio
+
+async def get_patient(patient_id: int):
+    await asyncio.sleep(0.1)  # stands in for async database/network I/O
+    return {"id": patient_id, "name": "Amina"}
+
+async def main():
+    patient = await get_patient(101)
+    print(patient)
+
+asyncio.run(main())</code></pre><p>async def creates a coroutine. await suspends the coroutine while an awaitable completes; it does not create a new OS thread by itself.</p></section>
+<section><h2>Run independent tasks concurrently</h2><pre><code>async def load_patient_dashboard(patient_id: int):
+    patient_task = asyncio.create_task(get_patient(patient_id))
+    appointments_task = asyncio.create_task(get_appointments(patient_id))
+
+    patient, appointments = await asyncio.gather(
+        patient_task, appointments_task
+    )
+    return {"patient": patient, "appointments": appointments}</code></pre><p>Understand TaskGroup, gather, cancellation, timeouts, exception propagation, semaphores and backpressure. Use bounded concurrency rather than launching unbounded tasks.</p></section>
+<section><h2>Threads, processes and the GIL</h2><p>For I/O-bound work, async or threads can help. For CPU-bound Python code, process pools or native libraries may use multiple CPU cores. Learn the GIL implications for the Python implementation/version you deploy.</p></section>
+<section><h2>Background jobs</h2><p>Appointment reminders, report generation and document processing are often better handled by durable queues and workers (Celery, RQ, Dramatiq or cloud queue services) than by keeping an HTTP request open.</p></section><footer>Programming Academy · Practical reference · Hospital HMS examples</footer></article></main></body></html>
