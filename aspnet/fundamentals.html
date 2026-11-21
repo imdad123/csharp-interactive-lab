@@ -43,11 +43,13 @@ else
     Results.Ok(new[] { "Dr. Ali", "Dr. Sara" }));
 
 app.MapGet("/api/doctors/{id:int}", (int id) =>
-    Results.Ok(new { Id = id, Name = "Dr. Ali" }));
+{
+    if (id == 1)
+        return Results.Ok(new { Id = id, Name = "Dr. Ali" });
 
-app.MapGet("/api/doctors/{id:int}", (int id) =>
-    Results.NotFound())
-    .WithName("GetDoctorById");</code></pre><p>Route templates can include parameters and constraints. Avoid duplicate route definitions with the same HTTP method and matching template; the sample second mapping is illustrative only and should not coexist with the previous mapping in a real application.</p></section>
+    return Results.NotFound();
+})
+.WithName("GetDoctorById");</code></pre><p>Route templates can include parameters and constraints. Avoid duplicate route definitions with the same HTTP method and matching template.</p></section>
 <section><h2>6. Request lifecycle mental model</h2><ol><li>The server accepts an HTTP request.</li><li>The request enters the middleware pipeline.</li><li>Routing selects an endpoint.</li><li>Authentication and authorization middleware establish and enforce identity rules.</li><li>Endpoint code invokes application services.</li><li>The application returns a result which is serialized into an HTTP response.</li></ol></section>
 <section><h2>7. Organize a solution</h2><pre><code>Hospital.sln
 src/
