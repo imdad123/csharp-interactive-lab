@@ -1,100 +1,164 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>C# Bootcamp · Lesson 02</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="C# Bootcamp Lesson 02: understand Program.cs, Main, namespaces, using directives, top-level statements, and the .NET execution flow.">
+<title>Lesson 02 — Anatomy of a C# Program | HospitalApp</title>
 <style>
-:root{--bg:#f5f7fb;--surface:#fff;--ink:#172033;--muted:#667085;--line:#e4e8f0;--blue:#2457d6;--soft:#edf3ff;--code:#111827}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 system-ui,-apple-system,Segoe UI,sans-serif}.top{background:#101b33;color:#fff;padding:18px max(22px,calc((100% - 980px)/2)}.top a{color:#bcd0ff;text-decoration:none}.wrap{max-width:980px;margin:34px auto;padding:0 20px}.hero,.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px;margin-bottom:20px}.eyebrow{color:var(--blue);font-weight:750;text-transform:uppercase;letter-spacing:.1em;font-size:12px}h1{font-size:clamp(30px,5vw,46px);line-height:1.12;margin:8px 0 14px}h2{font-size:24px;margin:0 0 12px}h3{font-size:18px;margin:20px 0 8px}.muted{color:var(--muted)}.callout{background:var(--soft);border-left:4px solid var(--blue);padding:14px 16px;border-radius:8px;margin:16px 0}pre{overflow:auto;background:var(--code);color:#e5e7eb;padding:18px;border-radius:12px;font:14px/1.65 ui-monospace,Consolas,monospace}code{font-family:ui-monospace,Consolas,monospace}.tag{display:inline-block;padding:4px 9px;background:#eef2f7;border-radius:99px;font-size:12px;font-weight:700;margin:3px}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:10px;border-bottom:1px solid var(--line)}th{background:#f8faff}.task{border:1px solid var(--line);padding:14px;border-radius:10px;margin:10px 0}@media(max-width:600px){.hero,.panel{padding:19px}.wrap{margin:18px auto}}
-</style></head>
+:root{color-scheme:light;--ink:#172033;--muted:#5d687b;--line:#e3e8f0;--surface:#f5f7fb;--blue:#2457c5;--green:#13795b}
+*{box-sizing:border-box}body{margin:0;background:#f5f7fb;color:var(--ink);font:16px/1.7 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{background:#101b33;color:#fff;padding:48px 20px}header .wrap,main{max-width:920px;margin:auto}header p{color:#c6d2e7;margin:8px 0}header h1{font-size:clamp(2rem,5vw,3rem);line-height:1.15;margin:12px 0}
+main{padding:28px 20px 70px}.meta{color:#d9e5ff;font-size:.9rem;letter-spacing:.04em;text-transform:uppercase}
+section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;margin:18px 0;box-shadow:0 3px 14px #14213b08}
+h2{font-size:1.45rem;margin:0 0 12px}h3{font-size:1.08rem;margin:20px 0 8px}p{margin:9px 0}ul,ol{padding-left:24px}
+code{font-family:Consolas,Monaco,monospace;background:#eef2f8;padding:2px 5px;border-radius:5px;font-size:.92em}
+pre{overflow-x:auto;background:#111c30;color:#e7edf8;padding:18px;border-radius:10px;line-height:1.55;font-size:.9rem}pre code{background:none;color:inherit;padding:0}
+table{width:100%;border-collapse:collapse;margin:12px 0}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--surface)}
+.note{border-left:4px solid var(--blue);background:#f0f5ff;padding:14px 16px;border-radius:0 8px 8px 0;margin:14px 0}.success{border-left-color:var(--green);background:#effaf5}
+.flow{display:grid;gap:8px;max-width:650px;margin:16px auto}.step{padding:14px;text-align:center;border:1px solid #cdd8ee;background:#f2f6ff;border-radius:9px}.arrow{text-align:center;color:var(--muted)}
+footer{color:var(--muted);text-align:center;padding:20px;font-size:.9rem}
+a{color:var(--blue)}@media(max-width:600px){section{padding:18px}header{padding:36px 20px}th,td{padding:8px;font-size:.92rem}}
+</style>
+</head>
 <body>
-<header class="top"><a href="../../index.html">← .NET Engineering Academy</a>　/　C# 7-Day Bootcamp</header>
-<main class="wrap">
-<section class="hero"><p class="eyebrow">DAY 01 · LESSON 02 · FOUNDATIONS</p><h1>User Input, Type Conversion & Operators</h1><p class="muted">Make the hospital console application interactive: collect patient information, validate it and calculate a bill.</p><span class="tag">Console</span><span class="tag">Input validation</span><span class="tag">Operators</span></section>
-<section class="panel"><h2>1. Why user input?</h2><p>A hospital receptionist registers many different patients. We cannot hardcode a new patient into the source code for every registration. The program must ask for information while it runs.</p><p><code>Console.ReadLine()</code> reads a line of text entered by the user.</p><pre><code>Console.Write("Enter patient name: ");
-string patientName = Console.ReadLine()!;
+<header><div class="wrap">
+<div class="meta">7-Day C# Bootcamp · Day 1 · Lesson 02</div>
+<h1>Anatomy of a C# Program</h1>
+<p>Understand how a .NET application starts, what Program.cs contains, and how the compiler and runtime work together.</p>
+</div></header>
+<main>
+<section>
+<h2>What you will learn</h2>
+<ul><li>How a C# application gets its starting point.</li><li>What Program.cs, Main(), namespaces, and using directives mean.</li><li>Why modern C# supports top-level statements.</li><li>How to build and run the Hospital Management System console project.</li></ul>
+</section>
+<section>
+<h2>1. Why does a program need an entry point?</h2>
+<p>Imagine a hospital opening in the morning. Before staff can register patients, book appointments, or collect payments, the hospital system must start and prepare itself. A computer program has the same requirement: the runtime needs to know where execution begins.</p>
+<p>That starting location is called the <strong>entry point</strong>. In a traditional C# console application, the entry point is the <code>Main()</code> method.</p>
+</section>
+<section>
+<h2>2. The traditional Main method</h2>
+<p>Open <code>Program.cs</code> in the HospitalApp.Console project and replace its contents with this code:</p>
+<pre><code>using System;
 
-Console.WriteLine($"Patient Name: {patientName}");</code></pre><p><code>Write</code> stays on the same line; <code>WriteLine</code> moves to a new line. <code>ReadLine</code> reads input as text.</p><div class="callout"><strong>Important:</strong> <code>Console.ReadLine()</code> returns a nullable string in modern .NET annotations. The <code>!</code> null-forgiving operator suppresses a compiler warning; it does not validate the input or guarantee a non-null value at runtime.</div></section>
-<section class="panel"><h2>2. Convert input into the correct type</h2><p>Even if a user types 35, <code>ReadLine()</code> returns the characters as a string. To do arithmetic, convert the value to a numeric type.</p><h3>Convert.ToInt32()</h3><pre><code>Console.Write("Enter patient age: ");
-string ageInput = Console.ReadLine()!;
-int patientAge = Convert.ToInt32(ageInput);</code></pre><h3>int.Parse()</h3><pre><code>int patientAge = int.Parse(Console.ReadLine()!);</code></pre><p>Both approaches can throw an exception if the text is not a valid integer. Parsing is appropriate when invalid input is exceptional or has already been validated.</p><h3>int.TryParse() — safer for user input</h3><pre><code>Console.Write("Enter patient age: ");
-string ageInput = Console.ReadLine()!;
-
-if (int.TryParse(ageInput, out int patientAge))
+namespace HospitalApp
 {
-    Console.WriteLine($"Patient Age: {patientAge}");
-}
-else
+    internal class Program
+    {
+        private static void Main(string[] args)
+        {
+            Console.WriteLine("================================");
+            Console.WriteLine("     HOSPITAL MANAGEMENT SYSTEM");
+            Console.WriteLine("================================");
+
+            Console.WriteLine("System started successfully.");
+            Console.WriteLine("Welcome to the hospital!");
+        }
+    }
+}</code></pre>
+<p>Run the application using <code>dotnet run</code>. Expected output:</p>
+<pre><code>================================
+     HOSPITAL MANAGEMENT SYSTEM
+================================
+System started successfully.
+Welcome to the hospital!</code></pre>
+<h3>Understand each part</h3>
+<table><thead><tr><th>Code</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>using System;</code></td><td>Allows types in the System namespace to be referenced by their short names.</td></tr>
+<tr><td><code>namespace HospitalApp</code></td><td>Groups related types under a logical name and helps prevent naming conflicts.</td></tr>
+<tr><td><code>internal class Program</code></td><td>Declares a class named Program. Internal means it is accessible within the same assembly.</td></tr>
+<tr><td><code>private static void Main(string[] args)</code></td><td>Declares the application's entry point.</td></tr>
+<tr><td><code>Console.WriteLine()</code></td><td>Writes text followed by a new line to the console.</td></tr>
+</tbody></table>
+<h3>Why is Main static?</h3>
+<p>The runtime must be able to start the application before an instance of the Program class exists. A static method belongs to the type itself, so it can be called without first creating a Program object.</p>
+<h3>Why does Main accept string[] args?</h3>
+<p>It can receive command-line arguments supplied when the application starts. For example, <code>dotnet run -- report</code> passes the word <code>report</code> to the application. We will use arguments later; for now, understand that they are startup inputs.</p>
+<h3>Why void?</h3>
+<p><code>void</code> means the method does not return a value to its caller. C# also supports entry-point forms that return an integer exit code, and asynchronous entry points; those will make more sense when we study methods and async programming.</p>
+</section>
+<section>
+<h2>3. What is a namespace?</h2>
+<p>As the hospital application grows, it will contain many types: Patient, Doctor, Appointment, Billing, and Medicine. Namespaces provide logical organization and help avoid naming collisions.</p>
+<pre><code>namespace HospitalApp.Patients
 {
-    Console.WriteLine("Invalid age. Please enter a whole number.");
-}</code></pre><p><code>TryParse</code> returns true when conversion succeeds and places the converted value in the <code>out</code> variable. It returns false instead of throwing a format exception for invalid text.</p><div class="callout"><strong>Professional rule:</strong> Validate external input at the boundary of your application. For an age, parsing is not enough: also check a sensible business range, such as 0–120.</div></section>
-<section class="panel"><h2>3. Convert money safely</h2><p>Use <code>decimal</code> for monetary values such as consultation fees, laboratory charges and medicine charges.</p><pre><code>Console.Write("Consultation fee: ");
-bool validFee = decimal.TryParse(
-    Console.ReadLine(),
-    out decimal consultationFee
-);
-
-if (validFee && consultationFee >= 0)
-{
-    Console.WriteLine($"Fee: {consultationFee:C}");
-}
-else
-{
-    Console.WriteLine("Enter a valid non-negative fee.");
-}</code></pre><p>The <code>:C</code> format specifier formats a value as currency using the current culture settings of the application. Configure culture explicitly if the application must always display a particular currency.</p></section>
-<section class="panel"><h2>4. C# operators</h2><p>Operators perform calculations, compare values and combine conditions.</p><h3>Arithmetic operators</h3><table><thead><tr><th>Operator</th><th>Meaning</th><th>Hospital example</th></tr></thead><tbody><tr><td><code>+</code></td><td>Addition</td><td>Consultation + lab fee</td></tr><tr><td><code>-</code></td><td>Subtraction</td><td>Remaining balance</td></tr><tr><td><code>*</code></td><td>Multiplication</td><td>Medicine price × quantity</td></tr><tr><td><code>/</code></td><td>Division</td><td>Split a bill</td></tr><tr><td><code>%</code></td><td>Remainder</td><td>Check even/odd room number</td></tr></tbody></table><pre><code>decimal consultation = 1250m;
-decimal laboratory = 850m;
-decimal medicine = 400m;
-
-decimal totalBill = consultation + laboratory + medicine;
-decimal amountPaid = 2000m;
-decimal balance = totalBill - amountPaid;
-
-Console.WriteLine($"Total: {totalBill}");
-Console.WriteLine($"Balance: {balance}");</code></pre><h3>Comparison operators</h3><p><code>==</code>, <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code> compare values and produce a Boolean result.</p><pre><code>int patientAge = 17;
-bool isAdult = patientAge >= 18;
-
-Console.WriteLine(isAdult); // False</code></pre><h3>Logical operators</h3><p><code>&amp;&amp;</code> means AND, <code>||</code> means OR, and <code>!</code> means NOT.</p><pre><code>bool hasAppointment = true;
-bool doctorAvailable = true;
-
-bool canCheckIn = hasAppointment && doctorAvailable;
-
-Console.WriteLine(canCheckIn);</code></pre><h3>Assignment and increment</h3><pre><code>int queueNumber = 10;
-queueNumber += 1; // same as queueNumber = queueNumber + 1
-queueNumber++;    // increment by one</code></pre></section>
-<section class="panel"><h2>5. Complete practical: patient registration and bill</h2><p>This example combines keyboard input, conversion, validation and arithmetic. Type it yourself, run it and test invalid values.</p><pre><code>Console.WriteLine("=== HOSPITAL REGISTRATION ===");
-
-Console.Write("Patient name: ");
-string patientName = Console.ReadLine() ?? "";
-
-Console.Write("Patient age: ");
-if (!int.TryParse(Console.ReadLine(), out int age) || age < 0 || age > 120)
-{
-    Console.WriteLine("Invalid age.");
-    return;
-}
-
-Console.Write("Consultation fee: ");
-if (!decimal.TryParse(Console.ReadLine(), out decimal consultation) || consultation < 0)
-{
-    Console.WriteLine("Invalid consultation fee.");
-    return;
+    internal class Patient
+    {
+    }
 }
 
-Console.Write("Laboratory charges: ");
-if (!decimal.TryParse(Console.ReadLine(), out decimal lab) || lab < 0)
+namespace HospitalApp.Doctors
 {
-    Console.WriteLine("Invalid laboratory charges.");
-    return;
-}
+    internal class Doctor
+    {
+    }
+}</code></pre>
+<p>Think of namespaces like departments in a hospital: they organize related responsibilities. A namespace is an organizational name, not a physical folder requirement—although projects often use matching folders for clarity.</p>
+</section>
+<section>
+<h2>4. What does using do?</h2>
+<p>The fully qualified type name can be written as:</p>
+<pre><code>System.Console.WriteLine("Patient registered");</code></pre>
+<p>After importing the namespace, the shorter form is available:</p>
+<pre><code>using System;
 
-decimal total = consultation + lab;
+Console.WriteLine("Patient registered");</code></pre>
+<div class="note"><strong>Important:</strong> <code>using System;</code> does not install a package, create an object, or execute code. It lets you refer to types in that namespace without repeatedly writing the full namespace.</div>
+<p>The project template has <code>ImplicitUsings</code> enabled in its .csproj file. This automatically imports commonly used namespaces, including System for this project. That is why a new .NET console project may work without an explicit <code>using System;</code>.</p>
+</section>
+<section>
+<h2>5. Modern C#: top-level statements</h2>
+<p>A new .NET console project may contain only this:</p>
+<pre><code>Console.WriteLine("Hello, World!");</code></pre>
+<p>There is no visible namespace, class, or Main method. C# supports <strong>top-level statements</strong>: the compiler generates the entry-point structure for you. This reduces boilerplate in small programs.</p>
+<p>Try replacing Program.cs with:</p>
+<pre><code>Console.WriteLine("================================");
+Console.WriteLine("     HOSPITAL MANAGEMENT SYSTEM");
+Console.WriteLine("================================");
 
-Console.WriteLine("\n=== PATIENT SUMMARY ===");
-Console.WriteLine($"Patient: {patientName}");
-Console.WriteLine($"Age: {age}");
-Console.WriteLine($"Total bill: {total:C}");</code></pre><p>Note: this is a learning example. A production hospital application also needs required-field validation, patient identity rules, persistence, audit logging and authorization.</p></section>
-<section class="panel"><h2>6. Practice assignments</h2><div class="task"><strong>Exercise A — Patient input</strong><p>Ask for patient name, age, phone number and patient ID. Display a formatted summary. Reject an invalid age.</p></div><div class="task"><strong>Exercise B — Hospital invoice</strong><p>Ask for consultation, laboratory and medicine charges. Calculate the total, amount paid and remaining balance. Reject negative amounts.</p></div><div class="task"><strong>Exercise C — Appointment eligibility</strong><p>Ask whether the patient has an appointment and whether the doctor is available. Use logical operators to decide whether check-in can proceed.</p></div><div class="task"><strong>Exercise D — Discount</strong><p>Ask for a bill amount and discount percentage. Calculate the discount and final payable amount.</p></div></section>
-<section class="panel"><h2>7. Knowledge check</h2><ol><li>Why does <code>Console.ReadLine()</code> return text even when the user enters a number?</li><li>What is the difference between <code>Parse</code> and <code>TryParse</code>?</li><li>What does the <code>out</code> keyword do in the TryParse example?</li><li>Which type should you use for money in this application?</li><li>What is the difference between <code>=</code> and <code>==</code>?</li><li>What does <code>&amp;&amp;</code> mean?</li></ol><div class="callout"><strong>Completion rule:</strong> Complete Exercises A and B in your own project. Test valid input, blank input, letters in numeric fields and negative charges.</div></section>
-<section class="panel"><h2>Next lesson</h2><p><strong>Lesson 03 — Decision Making: if, else, switch and pattern matching.</strong> We'll implement patient categories, appointment status and billing decisions.</p><p class="muted">Type NEXT in the ChatGPT conversation when you're ready.</p></section>
-</main></body></html>
+Console.WriteLine("System started successfully.");</code></pre>
+<p>Run <code>dotnet run</code>. It works too. These are two ways to express an application's entry point, not two different languages.</p>
+<div class="note success"><strong>Professional practice:</strong> Learn both forms. We will use the style that best supports the clarity of each stage of our project. Top-level statements are convenient for small apps; an explicit Program class can make the structure more visible while learning.</div>
+<p>Rule to remember: top-level statements must appear before namespace and type declarations in the same file.</p>
+</section>
+<section>
+<h2>6. The simplified .NET execution flow</h2>
+<div class="flow">
+<div class="step"><strong>You write C# code</strong><br><small>Program.cs</small></div>
+<div class="arrow">↓</div>
+<div class="step"><strong>The .NET SDK builds the project</strong><br><small>The C# compiler produces Intermediate Language (IL) in an assembly.</small></div>
+<div class="arrow">↓</div>
+<div class="step"><strong>The .NET runtime executes it</strong><br><small>The runtime uses JIT compilation to turn methods into native machine code as needed.</small></div>
+<div class="arrow">↓</div>
+<div class="step"><strong>Your hospital application runs</strong><br><small>It can display output and perform its work.</small></div>
+</div>
+<p>This is a simplified model. The runtime also provides services such as managed memory, garbage collection, exception handling, and type safety.</p>
+</section>
+<section>
+<h2>7. Build versus run</h2>
+<pre><code>dotnet build</code></pre>
+<p>Compiles the project and reports build errors. It does not normally launch the application.</p>
+<pre><code>dotnet run</code></pre>
+<p>Builds the project if needed, then runs it. Use <code>dotnet build</code> to check whether your code compiles; use <code>dotnet run</code> to execute it.</p>
+</section>
+<section>
+<h2>8. Practical assignment</h2>
+<ol>
+<li>Write the traditional Program class and Main method shown in section 2.</li>
+<li>Run <code>dotnet build</code>, then <code>dotnet run</code>.</li>
+<li>Change the welcome message to say that the patient registration module is ready.</li>
+<li>Replace the code with the top-level version and run it again.</li>
+<li>Explain in your own words why both versions work and what the entry point means.</li>
+</ol>
+<div class="note"><strong>Checkpoint:</strong> Do not move on until you can explain why Main is static, what a namespace organizes, and what the compiler generates for top-level statements.</div>
+</section>
+<section>
+<h2>Lesson summary</h2>
+<ul><li>The entry point tells .NET where application execution begins.</li><li>Traditional console applications use a Main method.</li><li>Namespaces organize types and reduce naming conflicts.</li><li>Using directives make names shorter; they do not install libraries.</li><li>Top-level statements let the compiler generate the entry-point boilerplate.</li><li><code>dotnet build</code> compiles; <code>dotnet run</code> builds if needed and executes.</li></ul>
+<p><strong>Next lesson:</strong> Variables, data types, and memory basics—using real hospital data such as patient names, ages, fees, and registration numbers.</p>
+</section>
+<footer>HospitalApp · C# 7-Day Bootcamp · Lesson 02</footer>
+</main>
+</body>
+</html>
