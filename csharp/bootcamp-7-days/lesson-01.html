@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="C# Bootcamp Day 1, Lesson 1: your first C# program, variables, data types and hospital examples.">
+<title>C# Bootcamp · Lesson 01</title>
+<style>
+:root{--bg:#f5f7fb;--surface:#fff;--ink:#172033;--muted:#667085;--line:#e4e8f0;--blue:#2457d6;--soft:#edf3ff;--green:#087443;--code:#111827}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 system-ui,-apple-system,Segoe UI,sans-serif}.top{background:#101b33;color:#fff;padding:18px max(22px,calc((100% - 980px)/2));}.top a{color:#bcd0ff;text-decoration:none}.wrap{max-width:980px;margin:34px auto;padding:0 20px}.hero,.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px;margin-bottom:20px}.eyebrow{color:var(--blue);font-weight:750;text-transform:uppercase;letter-spacing:.1em;font-size:12px}h1{font-size:clamp(30px,5vw,46px);line-height:1.12;margin:8px 0 14px}h2{font-size:24px;margin:0 0 12px}h3{font-size:18px;margin:20px 0 8px}.muted{color:var(--muted)}.callout{background:var(--soft);border-left:4px solid var(--blue);padding:14px 16px;border-radius:8px;margin:16px 0}pre{overflow:auto;background:var(--code);color:#e5e7eb;padding:18px;border-radius:12px;font:14px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.tag{display:inline-block;padding:4px 9px;background:#eef2f7;border-radius:99px;font-size:12px;font-weight:700;margin:3px}.task{border:1px solid var(--line);padding:14px;border-radius:10px;margin:10px 0}.check{color:var(--green);font-weight:700}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:10px;border-bottom:1px solid var(--line)}th{background:#f8faff}@media(max-width:600px){.hero,.panel{padding:19px}.wrap{margin:18px auto}}
+</style>
+</head>
+<body>
+<header class="top"><a href="../../index.html">← .NET Engineering Academy</a>　/　C# 7-Day Bootcamp</header>
+<main class="wrap">
+<section class="hero">
+<p class="eyebrow">DAY 01 · LESSON 01 · FOUNDATIONS</p>
+<h1>Your first C# program</h1>
+<p class="muted">Start from zero. Understand what a C# program is, how it runs, and how to store hospital data in variables.</p>
+<span class="tag">Beginner</span><span class="tag">Console App</span><span class="tag">Hospital HMS</span>
+</section>
+<section class="panel">
+<h2>1. Why do we need C#?</h2>
+<p>A hospital handles information and decisions: registering patients, assigning doctors, calculating bills and checking appointments. A computer needs precise instructions to perform these operations. A programming language lets us express those instructions.</p>
+<p>C# is a general-purpose, strongly typed programming language from Microsoft. It runs on the .NET platform. We will use C# to build the logic of our Hospital Management System before learning how ASP.NET Core exposes that logic through web APIs.</p>
+<div class="callout"><strong>Professional mental model:</strong> C# is the language; .NET is the runtime and platform that executes your application and provides libraries for common work.</div>
+</section>
+<section class="panel">
+<h2>2. Create and run your first application</h2>
+<p>Install the current .NET SDK and use Visual Studio or the terminal. Create a console application:</p>
+<pre><code>dotnet new console -n HospitalApp.Console
+cd HospitalApp.Console
+dotnet run</code></pre>
+<p>Open <code>Program.cs</code>. A modern console project may start with top-level statements:</p>
+<pre><code>Console.WriteLine("Hospital Management System");
+Console.WriteLine("Welcome to the patient registration desk.");</code></pre>
+<p><code>Console.WriteLine</code> prints text and moves to a new line. <code>Console.Write</code> prints without automatically moving to a new line.</p>
+<h3>What happens when you run it?</h3>
+<ol><li>You write C# source code in <code>.cs</code> files.</li><li>The .NET SDK builds the project.</li><li>The runtime executes the compiled application.</li><li>Your instructions produce output or perform work.</li></ol>
+</section>
+<section class="panel">
+<h2>3. Variables: named storage for information</h2>
+<p>A variable is a named location in which your program stores a value. Think of a patient registration form: it has separate fields for patient name, age, patient number and whether the patient is admitted.</p>
+<pre><code>string patientName = "Ayesha Khan";
+int patientAge = 34;
+decimal consultationFee = 1500.00m;
+bool isAdmitted = false;
+
+Console.WriteLine(patientName);
+Console.WriteLine(patientAge);
+Console.WriteLine(consultationFee);
+Console.WriteLine(isAdmitted);</code></pre>
+<p>The type tells C# what kind of value a variable can hold. The variable name should describe its purpose.</p>
+<table><thead><tr><th>Type</th><th>Use</th><th>Hospital example</th></tr></thead><tbody>
+<tr><td><code>string</code></td><td>Text</td><td>Patient or doctor name</td></tr>
+<tr><td><code>int</code></td><td>Whole numbers</td><td>Age, room number, quantity</td></tr>
+<tr><td><code>long</code></td><td>Large whole numbers</td><td>Large identifier values</td></tr>
+<tr><td><code>decimal</code></td><td>Precise decimal arithmetic</td><td>Bill amount, medicine price</td></tr>
+<tr><td><code>double</code></td><td>Floating-point measurements</td><td>Scientific calculations</td></tr>
+<tr><td><code>bool</code></td><td>true or false</td><td>Is patient admitted?</td></tr>
+<tr><td><code>char</code></td><td>One character</td><td>Blood group component or grade</td></tr>
+</tbody></table>
+<div class="callout"><strong>Important:</strong> Use <code>decimal</code> for financial values such as invoices and payments. A decimal literal uses the <code>m</code> suffix, for example <code>1500.00m</code>.</div>
+<h3>Changing a variable</h3>
+<pre><code>decimal billAmount = 1500m;
+billAmount = 1800m; // updated after adding a service
+
+Console.WriteLine(billAmount);</code></pre>
+<p>Use <code>var</code> when the compiler can clearly infer the type from the assigned value:</p>
+<pre><code>var doctorName = "Dr. Hamza"; // inferred as string
+var wardNumber = 12;          // inferred as int</code></pre>
+<p><code>var</code> does not make a variable dynamically typed. Its type is still determined at compile time.</p>
+</section>
+<section class="panel">
+<h2>4. Naming and professional conventions</h2>
+<ul><li>Use <code>camelCase</code> for local variables and parameters: <code>patientName</code>.</li><li>Use meaningful names; avoid <code>x</code>, <code>a1</code> or <code>data</code> when a precise name is possible.</li><li>C# is case-sensitive: <code>patientName</code> and <code>PatientName</code> are different identifiers.</li><li>End most statements with a semicolon.</li><li>Use braces to group code blocks as you progress.</li></ul>
+</section>
+<section class="panel">
+<h2>5. Practice — patient registration desk</h2>
+<p>Write a console program that stores and displays the following details for one patient:</p>
+<div class="task"><strong>Exercise A — Patient record</strong><ul><li>Patient name</li><li>Patient age</li><li>Patient ID</li><li>Consultation fee</li><li>Whether the patient is admitted</li></ul></div>
+<div class="task"><strong>Exercise B — Billing</strong><p>Create variables for consultation fee (1250), laboratory charges (850) and medicine charges (400). Calculate the total and print it.</p></div>
+<div class="task"><strong>Exercise C — Your own challenge</strong><p>Create a doctor record with a name, specialty, room number and availability status. Print a readable summary.</p></div>
+<h3>Expected output example</h3>
+<pre><code>HOSPITAL PATIENT RECORD
+Patient: Ayesha Khan
+Age: 34
+Patient ID: 10025
+Consultation Fee: 1250
+Admitted: False
+
+TOTAL BILL: 2500</code></pre>
+</section>
+<section class="panel">
+<h2>6. Knowledge check</h2>
+<ol><li>What is the difference between C# and .NET?</li><li>Which data type would you choose for a hospital invoice amount, and why?</li><li>What does <code>Console.WriteLine()</code> do?</li><li>Is <code>var</code> dynamically typed?</li><li>Which type represents true or false?</li></ol>
+<p class="callout"><strong>Completion rule:</strong> Write and run Exercises A and B yourself before moving on. Do not just read the code.</p>
+</section>
+<section class="panel">
+<h2>Next lesson</h2>
+<p><strong>Lesson 02 — User Input, Type Conversion and Operators.</strong> We will accept patient details from the keyboard, convert input safely and calculate hospital bills.</p>
+<p class="muted">Bootcamp sequence: Day 1 → Lesson 1. Type NEXT in the ChatGPT conversation when you're ready.</p>
+</section>
+</main>
+</body>
+</html>
