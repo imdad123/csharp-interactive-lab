@@ -1,105 +1,152 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="C# Bootcamp Day 1, Lesson 1: your first C# program, variables, data types and hospital examples.">
-<title>C# Bootcamp · Lesson 01</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content=".NET from zero: platform, SDK, runtime, CLR, project structure and first HospitalApp console project.">
+<title>.NET Foundations · Lesson 01</title>
 <style>
-:root{--bg:#f5f7fb;--surface:#fff;--ink:#172033;--muted:#667085;--line:#e4e8f0;--blue:#2457d6;--soft:#edf3ff;--green:#087443;--code:#111827}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 system-ui,-apple-system,Segoe UI,sans-serif}.top{background:#101b33;color:#fff;padding:18px max(22px,calc((100% - 980px)/2));}.top a{color:#bcd0ff;text-decoration:none}.wrap{max-width:980px;margin:34px auto;padding:0 20px}.hero,.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px;margin-bottom:20px}.eyebrow{color:var(--blue);font-weight:750;text-transform:uppercase;letter-spacing:.1em;font-size:12px}h1{font-size:clamp(30px,5vw,46px);line-height:1.12;margin:8px 0 14px}h2{font-size:24px;margin:0 0 12px}h3{font-size:18px;margin:20px 0 8px}.muted{color:var(--muted)}.callout{background:var(--soft);border-left:4px solid var(--blue);padding:14px 16px;border-radius:8px;margin:16px 0}pre{overflow:auto;background:var(--code);color:#e5e7eb;padding:18px;border-radius:12px;font:14px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.tag{display:inline-block;padding:4px 9px;background:#eef2f7;border-radius:99px;font-size:12px;font-weight:700;margin:3px}.task{border:1px solid var(--line);padding:14px;border-radius:10px;margin:10px 0}.check{color:var(--green);font-weight:700}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:10px;border-bottom:1px solid var(--line)}th{background:#f8faff}@media(max-width:600px){.hero,.panel{padding:19px}.wrap{margin:18px auto}}
+:root{--bg:#f4f6fb;--surface:#fff;--ink:#172033;--muted:#667085;--line:#e3e8f0;--blue:#2457d6;--soft:#edf3ff;--code:#111827;--green:#087443}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.72 system-ui,-apple-system,Segoe UI,sans-serif}.top{background:#101b33;color:white;padding:16px max(22px,calc((100% - 980px)/2))}.top a{color:#c6d6ff;text-decoration:none}.wrap{max-width:980px;margin:32px auto;padding:0 20px}.hero,.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px;margin-bottom:20px}.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:var(--blue)}h1{font-size:clamp(30px,5vw,46px);line-height:1.12;margin:8px 0 12px}h2{font-size:24px;line-height:1.3;margin:0 0 12px}h3{font-size:18px;margin:22px 0 8px}.muted{color:var(--muted)}.callout{background:var(--soft);border-left:4px solid var(--blue);padding:14px 16px;border-radius:8px;margin:16px 0}pre{background:var(--code);color:#e5e7eb;border-radius:12px;padding:18px;overflow:auto;font:14px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.tag{display:inline-block;background:#eef2f7;border-radius:99px;padding:4px 10px;font-size:12px;font-weight:700;margin:3px}.diagram{border:1px solid var(--line);border-radius:12px;padding:15px;text-align:center;margin:10px 0}.down{color:var(--blue);font-weight:800;padding:4px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}.tile{border:1px solid var(--line);border-radius:10px;padding:13px}.task{border:1px solid var(--line);border-radius:10px;padding:14px;margin:10px 0}table{border-collapse:collapse;width:100%}td,th{text-align:left;padding:10px;border-bottom:1px solid var(--line)}th{background:#f7f9fc}@media(max-width:600px){.hero,.panel{padding:19px}.wrap{margin:18px auto}}
 </style>
 </head>
 <body>
-<header class="top"><a href="../../index.html">← .NET Engineering Academy</a>　/　C# 7-Day Bootcamp</header>
+<header class="top"><a href="../../index.html">← .NET Engineering Academy</a>　/　C# and .NET Bootcamp</header>
 <main class="wrap">
 <section class="hero">
-<p class="eyebrow">DAY 01 · LESSON 01 · FOUNDATIONS</p>
-<h1>Your first C# program</h1>
-<p class="muted">Start from zero. Understand what a C# program is, how it runs, and how to store hospital data in variables.</p>
-<span class="tag">Beginner</span><span class="tag">Console App</span><span class="tag">Hospital HMS</span>
+<p class="eyebrow">DAY 01 · LESSON 01 · STARTING FROM ZERO</p>
+<h1>What is .NET? Build your first HospitalApp</h1>
+<p class="muted">Before learning C# syntax, understand the platform that compiles, runs and supports your C# applications.</p>
+<span class="tag">Beginner</span><span class="tag">.NET 10 LTS</span><span class="tag">SDK + Runtime</span><span class="tag">Hospital HMS</span>
 </section>
 <section class="panel">
-<h2>1. Why do we need C#?</h2>
-<p>A hospital handles information and decisions: registering patients, assigning doctors, calculating bills and checking appointments. A computer needs precise instructions to perform these operations. A programming language lets us express those instructions.</p>
-<p>C# is a general-purpose, strongly typed programming language from Microsoft. It runs on the .NET platform. We will use C# to build the logic of our Hospital Management System before learning how ASP.NET Core exposes that logic through web APIs.</p>
-<div class="callout"><strong>Professional mental model:</strong> C# is the language; .NET is the runtime and platform that executes your application and provides libraries for common work.</div>
+<h2>1. The problem .NET solves</h2>
+<p>A computer's processor executes machine instructions. It does not directly execute the C# source code that a developer writes. A real application also needs memory management, exception handling, libraries, networking, file access and a consistent way to build and run it.</p>
+<p>Without a common platform, developers would have to solve many of these infrastructure problems themselves and deal with different operating systems and execution environments.</p>
+<div class="callout"><strong>Why .NET exists:</strong> .NET gives developers a shared platform, runtime, libraries and tools so they can focus more on application behavior—such as registering patients and calculating invoices—instead of rebuilding low-level infrastructure.</div>
 </section>
 <section class="panel">
-<h2>2. Create and run your first application</h2>
-<p>Install the current .NET SDK and use Visual Studio or the terminal. Create a console application:</p>
-<pre><code>dotnet new console -n HospitalApp.Console
+<h2>2. What is .NET?</h2>
+<p>.NET is a free, open-source, cross-platform developer platform from Microsoft. It includes a runtime, base libraries, SDK tools and application frameworks.</p>
+<div class="grid">
+<div class="tile"><strong>C#</strong><p class="muted">The programming language used to express application logic.</p></div>
+<div class="tile"><strong>.NET</strong><p class="muted">The platform and runtime that provide execution and libraries.</p></div>
+<div class="tile"><strong>ASP.NET Core</strong><p class="muted">The framework we'll later use to build web applications and APIs.</p></div>
+<div class="tile"><strong>EF Core</strong><p class="muted">An object-relational mapper for working with databases from .NET.</p></div>
+<div class="tile"><strong>SQL Server</strong><p class="muted">The relational database that will store hospital records.</p></div>
+</div>
+<p>With .NET you can build console programs, web APIs, websites, desktop apps, mobile apps, cloud services and background workers.</p>
+</section>
+<section class="panel">
+<h2>3. .NET, SDK, runtime and CLR are not the same thing</h2>
+<h3>.NET SDK — Software Development Kit</h3>
+<p>The SDK is the developer's toolbox. It includes the command-line interface, build tools, compiler and the components needed to create, build and publish .NET applications.</p>
+<h3>.NET Runtime</h3>
+<p>The runtime is what a machine needs to execute a built .NET application. A machine that only runs an application may need the runtime without the full SDK.</p>
+<h3>CLR — Common Language Runtime</h3>
+<p>The CLR is the managed execution environment in .NET. It handles services such as garbage collection, exception handling, type safety and execution of managed code.</p>
+<h3>Base Class Library (BCL)</h3>
+<p>The BCL supplies reusable types and APIs for strings, collections, dates, files, networking, tasks and many other common operations.</p>
+<div class="callout"><strong>Hospital analogy:</strong> Think of the SDK as the workshop and tools used to build the hospital system; the runtime as the environment that operates it; the CLR as the managed execution supervisor; and the libraries as ready-made equipment you can use instead of building every tool yourself.</div>
+</section>
+<section class="panel">
+<h2>4. What happens when C# code runs?</h2>
+<div class="diagram"><strong>Program.cs</strong><br><span class="muted">Your C# source code</span></div>
+<div class="down">↓ SDK build: C# compiler</div>
+<div class="diagram"><strong>Assembly (for example, HospitalApp.dll)</strong><br><span class="muted">Contains Intermediate Language (IL), metadata and other information</span></div>
+<div class="down">↓ .NET runtime loads the assembly; JIT compiles methods when needed</div>
+<div class="diagram"><strong>Native machine instructions</strong><br><span class="muted">Executed by the processor</span></div>
+<p>The C# compiler normally translates C# into Intermediate Language (IL), not directly into final processor instructions. The runtime's Just-In-Time (JIT) compiler converts IL methods into native machine code as the application executes. Ahead-of-time compilation is also available for certain deployment scenarios.</p>
+</section>
+<section class="panel">
+<h2>5. Which .NET version should we learn?</h2>
+<p>We'll target <strong>.NET 10 LTS</strong> for this bootcamp and our initial hospital application. It is a supported Long Term Support release. .NET 11 is also supported, but it is a Standard Term Support release.</p>
+<p>Microsoft's current support policy lists .NET 10 LTS and .NET 11 STS as supported releases. Always keep the chosen release on its latest servicing patch.</p>
+<p><a href="https://dotnet.microsoft.com/en-us/download/dotnet/10.0">Download .NET 10 SDK from Microsoft</a> · <a href="https://dotnet.microsoft.com/en-us/platform/support/policy">Official .NET support policy</a></p>
+</section>
+<section class="panel">
+<h2>6. Install and verify the SDK on Windows</h2>
+<p>Install the .NET 10 SDK. You can use Visual Studio with the .NET desktop development workload, or use Visual Studio Code / another editor with the SDK installed.</p>
+<p>Open PowerShell or Windows Terminal and run:</p>
+<pre><code>dotnet --info
+dotnet --list-sdks
+dotnet --list-runtimes</code></pre>
+<p><code>dotnet --info</code> displays SDK and environment details. <code>--list-sdks</code> lists installed SDKs. <code>--list-runtimes</code> lists installed runtimes.</p>
+<div class="callout"><strong>Important distinction:</strong> Having a runtime installed does not necessarily mean you have the SDK needed to create and compile projects. For development, install the SDK.</div>
+</section>
+<section class="panel">
+<h2>7. Create your first real .NET project</h2>
+<p>We will create a console application because it lets us learn the language and platform without adding web-server complexity yet.</p>
+<pre><code>mkdir HospitalManagement
+cd HospitalManagement
+
+dotnet new console --name HospitalApp.Console --framework net10.0
+
 cd HospitalApp.Console
 dotnet run</code></pre>
-<p>Open <code>Program.cs</code>. A modern console project may start with top-level statements:</p>
-<pre><code>Console.WriteLine("Hospital Management System");
-Console.WriteLine("Welcome to the patient registration desk.");</code></pre>
-<p><code>Console.WriteLine</code> prints text and moves to a new line. <code>Console.Write</code> prints without automatically moving to a new line.</p>
-<h3>What happens when you run it?</h3>
-<ol><li>You write C# source code in <code>.cs</code> files.</li><li>The .NET SDK builds the project.</li><li>The runtime executes the compiled application.</li><li>Your instructions produce output or perform work.</li></ol>
-</section>
-<section class="panel">
-<h2>3. Variables: named storage for information</h2>
-<p>A variable is a named location in which your program stores a value. Think of a patient registration form: it has separate fields for patient name, age, patient number and whether the patient is admitted.</p>
-<pre><code>string patientName = "Ayesha Khan";
-int patientAge = 34;
-decimal consultationFee = 1500.00m;
-bool isAdmitted = false;
-
-Console.WriteLine(patientName);
-Console.WriteLine(patientAge);
-Console.WriteLine(consultationFee);
-Console.WriteLine(isAdmitted);</code></pre>
-<p>The type tells C# what kind of value a variable can hold. The variable name should describe its purpose.</p>
-<table><thead><tr><th>Type</th><th>Use</th><th>Hospital example</th></tr></thead><tbody>
-<tr><td><code>string</code></td><td>Text</td><td>Patient or doctor name</td></tr>
-<tr><td><code>int</code></td><td>Whole numbers</td><td>Age, room number, quantity</td></tr>
-<tr><td><code>long</code></td><td>Large whole numbers</td><td>Large identifier values</td></tr>
-<tr><td><code>decimal</code></td><td>Precise decimal arithmetic</td><td>Bill amount, medicine price</td></tr>
-<tr><td><code>double</code></td><td>Floating-point measurements</td><td>Scientific calculations</td></tr>
-<tr><td><code>bool</code></td><td>true or false</td><td>Is patient admitted?</td></tr>
-<tr><td><code>char</code></td><td>One character</td><td>Blood group component or grade</td></tr>
+<p>What each command means:</p>
+<table><thead><tr><th>Command</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>mkdir</code></td><td>Creates a folder for the solution's work.</td></tr>
+<tr><td><code>cd</code></td><td>Changes the current directory.</td></tr>
+<tr><td><code>dotnet new console</code></td><td>Uses an SDK template to create a console project.</td></tr>
+<tr><td><code>--name</code></td><td>Sets the project name.</td></tr>
+<tr><td><code>--framework net10.0</code></td><td>Targets the .NET 10 framework.</td></tr>
+<tr><td><code>dotnet run</code></td><td>Builds and runs the project.</td></tr>
 </tbody></table>
-<div class="callout"><strong>Important:</strong> Use <code>decimal</code> for financial values such as invoices and payments. A decimal literal uses the <code>m</code> suffix, for example <code>1500.00m</code>.</div>
-<h3>Changing a variable</h3>
-<pre><code>decimal billAmount = 1500m;
-billAmount = 1800m; // updated after adding a service
+<p>The template may print a simple greeting. That is generated starter code—not magic. We will inspect the files next.</p>
+</section>
+<section class="panel">
+<h2>8. Understand the project structure</h2>
+<p>Open the <code>HospitalApp.Console</code> folder. You should see files similar to these:</p>
+<pre><code>HospitalApp.Console/
+│
+├── HospitalApp.Console.csproj
+├── Program.cs
+├── bin/
+└── obj/</code></pre>
+<h3>HospitalApp.Console.csproj</h3>
+<p>This is the project file. It tells the SDK how to build the project, including its target framework and other settings.</p>
+<pre><code>&lt;Project Sdk="Microsoft.NET.Sdk"&gt;
 
-Console.WriteLine(billAmount);</code></pre>
-<p>Use <code>var</code> when the compiler can clearly infer the type from the assigned value:</p>
-<pre><code>var doctorName = "Dr. Hamza"; // inferred as string
-var wardNumber = 12;          // inferred as int</code></pre>
-<p><code>var</code> does not make a variable dynamically typed. Its type is still determined at compile time.</p>
-</section>
-<section class="panel">
-<h2>4. Naming and professional conventions</h2>
-<ul><li>Use <code>camelCase</code> for local variables and parameters: <code>patientName</code>.</li><li>Use meaningful names; avoid <code>x</code>, <code>a1</code> or <code>data</code> when a precise name is possible.</li><li>C# is case-sensitive: <code>patientName</code> and <code>PatientName</code> are different identifiers.</li><li>End most statements with a semicolon.</li><li>Use braces to group code blocks as you progress.</li></ul>
-</section>
-<section class="panel">
-<h2>5. Practice — patient registration desk</h2>
-<p>Write a console program that stores and displays the following details for one patient:</p>
-<div class="task"><strong>Exercise A — Patient record</strong><ul><li>Patient name</li><li>Patient age</li><li>Patient ID</li><li>Consultation fee</li><li>Whether the patient is admitted</li></ul></div>
-<div class="task"><strong>Exercise B — Billing</strong><p>Create variables for consultation fee (1250), laboratory charges (850) and medicine charges (400). Calculate the total and print it.</p></div>
-<div class="task"><strong>Exercise C — Your own challenge</strong><p>Create a doctor record with a name, specialty, room number and availability status. Print a readable summary.</p></div>
-<h3>Expected output example</h3>
-<pre><code>HOSPITAL PATIENT RECORD
-Patient: Ayesha Khan
-Age: 34
-Patient ID: 10025
-Consultation Fee: 1250
-Admitted: False
+  &lt;PropertyGroup&gt;
+    &lt;OutputType&gt;Exe&lt;/OutputType&gt;
+    &lt;TargetFramework&gt;net10.0&lt;/TargetFramework&gt;
+    &lt;ImplicitUsings&gt;enable&lt;/ImplicitUsings&gt;
+    &lt;Nullable&gt;enable&lt;/Nullable&gt;
+  &lt;/PropertyGroup&gt;
 
-TOTAL BILL: 2500</code></pre>
+&lt;/Project&gt;</code></pre>
+<ul><li><code>OutputType</code>: this project produces an executable application.</li><li><code>TargetFramework</code>: the .NET version the project targets.</li><li><code>ImplicitUsings</code>: enables common namespaces without writing every using directive.</li><li><code>Nullable</code>: enables nullable reference type analysis to help detect possible null errors.</li></ul>
+<h3>Program.cs</h3>
+<p>This is where our first C# instructions live. Modern console templates use top-level statements, so you do not need to write a class and Main method immediately.</p>
+<pre><code>Console.WriteLine("Hospital Management System");
+Console.WriteLine("Starting patient registration...");</code></pre>
+<h3>bin and obj</h3>
+<p><code>obj</code> contains intermediate build files. <code>bin</code> contains build outputs. These folders are generated by the SDK; normally you do not edit them manually or commit them to Git.</p>
 </section>
 <section class="panel">
-<h2>6. Knowledge check</h2>
-<ol><li>What is the difference between C# and .NET?</li><li>Which data type would you choose for a hospital invoice amount, and why?</li><li>What does <code>Console.WriteLine()</code> do?</li><li>Is <code>var</code> dynamically typed?</li><li>Which type represents true or false?</li></ol>
-<p class="callout"><strong>Completion rule:</strong> Write and run Exercises A and B yourself before moving on. Do not just read the code.</p>
+<h2>9. Build versus run</h2>
+<pre><code>dotnet build
+dotnet run</code></pre>
+<p><code>dotnet build</code> compiles the project and reports errors without intentionally starting your application. <code>dotnet run</code> runs the project and builds it first when necessary.</p>
+<p>Try introducing a spelling error in <code>Program.cs</code>, run <code>dotnet build</code>, and inspect the compiler error. Fix it and build again. Reading compiler messages is a core developer skill.</p>
+</section>
+<section class="panel">
+<h2>10. Your practical assignment</h2>
+<div class="task"><strong>Task A — Verify your environment</strong><p>Run <code>dotnet --info</code> and confirm that the .NET 10 SDK is installed.</p></div>
+<div class="task"><strong>Task B — Create the project</strong><p>Create <code>HospitalApp.Console</code> targeting <code>net10.0</code>. Run it successfully.</p></div>
+<div class="task"><strong>Task C — Inspect the project</strong><p>Open the <code>.csproj</code> file. Identify the target framework, output type, implicit usings and nullable settings.</p></div>
+<div class="task"><strong>Task D — Change the program</strong><p>Replace the starter code with two lines: one that prints the hospital name and another that prints a welcome message for the patient registration desk.</p></div>
+<div class="task"><strong>Task E — Build separately</strong><p>Run <code>dotnet build</code>, then <code>dotnet run</code>. Explain the difference in your own words.</p></div>
+</section>
+<section class="panel">
+<h2>11. Check your understanding</h2>
+<ol><li>Why does C# need a runtime?</li><li>What is the difference between the SDK and runtime?</li><li>What does the CLR do?</li><li>Does the C# compiler normally compile source code directly into machine code?</li><li>What is the purpose of the <code>.csproj</code> file?</li><li>What is the difference between <code>dotnet build</code> and <code>dotnet run</code>?</li></ol>
+<div class="callout"><strong>Do not move ahead until:</strong> You have installed the SDK, created the project, run it and can explain the role of the SDK, runtime and CLR.</div>
 </section>
 <section class="panel">
 <h2>Next lesson</h2>
-<p><strong>Lesson 02 — User Input, Type Conversion and Operators.</strong> We will accept patient details from the keyboard, convert input safely and calculate hospital bills.</p>
-<p class="muted">Bootcamp sequence: Day 1 → Lesson 1. Type NEXT in the ChatGPT conversation when you're ready.</p>
+<p><strong>Lesson 02 — C# Program Anatomy:</strong> statements, namespaces, using directives, classes, the Main method, top-level statements, entry points and how a .NET project starts executing.</p>
+<p class="muted">Type NEXT in the ChatGPT conversation when you're ready.</p>
 </section>
 </main>
 </body>
