@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="C# Bootcamp Lesson 03: variables, data types, memory, type conversion, and nullable values with a Hospital Management System example.">
+<title>Lesson 03 — Variables, Data Types & Memory | HospitalApp</title>
+<style>
+:root{color-scheme:light;--ink:#172033;--muted:#5d687b;--line:#e3e8f0;--blue:#2457c5}
+*{box-sizing:border-box}body{margin:0;background:#f5f7fb;color:var(--ink);font:16px/1.7 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{background:#101b33;color:#fff;padding:46px 20px}header .wrap,main{max-width:920px;margin:auto}header p{color:#c6d2e7;margin:8px 0}header h1{font-size:clamp(2rem,5vw,3rem);line-height:1.15;margin:12px 0}.meta{color:#d9e5ff;font-size:.9rem;text-transform:uppercase;letter-spacing:.04em}
+main{padding:28px 20px 70px}section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;margin:18px 0;box-shadow:0 3px 14px #14213b08}
+h2{font-size:1.4rem;margin:0 0 12px}h3{font-size:1.08rem;margin:20px 0 8px}p{margin:9px 0}ul,ol{padding-left:24px}code{font-family:Consolas,Monaco,monospace;background:#eef2f8;padding:2px 5px;border-radius:5px;font-size:.92em}
+pre{overflow-x:auto;background:#111c30;color:#e7edf8;padding:18px;border-radius:10px;line-height:1.55;font-size:.9rem}pre code{background:none;color:inherit;padding:0}
+table{width:100%;border-collapse:collapse;margin:12px 0}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#f5f7fb}.note{border-left:4px solid var(--blue);background:#f0f5ff;padding:14px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+footer{text-align:center;color:var(--muted);padding:20px;font-size:.9rem}@media(max-width:600px){section{padding:18px}header{padding:36px 20px}th,td{padding:8px;font-size:.92rem}}
+</style></head>
+<body>
+<header><div class="wrap"><div class="meta">7-Day C# Bootcamp · Day 1 · Lesson 03</div><h1>Variables, Data Types & Memory Basics</h1><p>Store and work with real hospital information using C#.</p></div></header>
+<main>
+<section><h2>What you will learn</h2><ul><li>What variables solve and how to declare them.</li><li>How to choose suitable data types.</li><li>How values and object references behave.</li><li>How to convert and validate input.</li><li>What nullable values mean.</li></ul></section>
+<section><h2>1. Why do variables exist?</h2>
+<p>A hospital registration form contains a patient name, age, phone number, registration number, consultation fee, and admission status. Printing fixed text is not enough: each patient has different information, and the program must store and reuse it.</p>
+<p>A <strong>variable</strong> is a named storage location used by a program to work with a value while it runs.</p>
+<pre><code>string patientName = "Ahmad Khan";
+int patientAge = 35;
+decimal consultationFee = 1500.50m;</code></pre>
+<p>These variables let the application reuse patient data without hard-coding the same values in every output statement.</p></section>
+<section><h2>2. Anatomy of a variable</h2>
+<pre><code>int patientAge = 35;</code></pre>
+<table><thead><tr><th>Part</th><th>Meaning</th></tr></thead><tbody><tr><td><code>int</code></td><td>Data type</td></tr><tr><td><code>patientAge</code></td><td>Variable name</td></tr><tr><td><code>=</code></td><td>Assignment operator</td></tr><tr><td><code>35</code></td><td>Value assigned</td></tr><tr><td><code>;</code></td><td>Ends the statement</td></tr></tbody></table>
+<p>C# is statically typed: each variable has a type known to the compiler. Types help detect invalid operations before the application runs. Adding a patient's age to their name is not a meaningful operation; type checking helps prevent mistakes like that.</p></section>
+<section><h2>3. Common C# data types</h2>
+<table><thead><tr><th>Type</th><th>Stores</th><th>Hospital example</th></tr></thead><tbody>
+<tr><td><code>string</code></td><td>Text</td><td><code>"Ahmad Khan"</code></td></tr><tr><td><code>int</code></td><td>Whole numbers</td><td><code>35</code> (age)</td></tr><tr><td><code>long</code></td><td>Large whole numbers</td><td>Large numeric identifiers</td></tr><tr><td><code>decimal</code></td><td>Base-10 decimal values</td><td><code>1500.50m</code> (fee)</td></tr><tr><td><code>double</code></td><td>Binary floating-point values</td><td>Scientific measurements</td></tr><tr><td><code>bool</code></td><td><code>true</code> or <code>false</code></td><td>Admission status</td></tr><tr><td><code>char</code></td><td>One character</td><td><code>'B'</code> (blood group marker)</td></tr></tbody></table>
+<h3>Why decimal for money?</h3><p>For financial values, <code>decimal</code> is generally preferred because it represents base-10 decimal fractions more appropriately than binary floating-point. The <code>m</code> suffix marks a decimal literal.</p>
+<pre><code>decimal consultationFee = 1500.50m;</code></pre>
+<h3>Why is a phone number a string?</h3><pre><code>string phoneNumber = "03001234567";</code></pre><p>A phone number is an identifier, not a quantity. We do not perform arithmetic on it, and a string preserves leading zeros.</p></section>
+<section><h2>4. Build a patient registration summary</h2>
+<p>Replace Program.cs with this complete example:</p>
+<pre><code>using System;
+
+namespace HospitalApp
+{
+    internal class Program
+    {
+        private static void Main(string[] args)
+        {
+            string patientName = "Ahmad Khan";
+            int patientAge = 35;
+            string phoneNumber = "03001234567";
+            decimal consultationFee = 1500.50m;
+            bool isAdmitted = false;
+            char bloodGroup = 'B';
+
+            Console.WriteLine("===== PATIENT REGISTRATION =====");
+            Console.WriteLine($"Patient Name: {patientName}");
+            Console.WriteLine($"Age: {patientAge}");
+            Console.WriteLine($"Phone: {phoneNumber}");
+            Console.WriteLine($"Consultation Fee: Rs. {consultationFee}");
+            Console.WriteLine($"Blood Group: {bloodGroup}");
+            Console.WriteLine($"Admitted: {isAdmitted}");
+        }
+    }
+}</code></pre>
+<p>Run <code>dotnet run</code>. The <code>$</code> before a string enables <strong>string interpolation</strong>, so values can be inserted with curly braces: <code>{patientName}</code>.</p>
+<p>You could also concatenate strings with <code>+</code>, but interpolation is usually easier to read when combining text and several values.</p></section>
+<section><h2>5. Variables can change</h2>
+<pre><code>int patientAge = 35;
+patientAge = 36;
+
+Console.WriteLine(patientAge); // 36</code></pre>
+<p>The first line declares the variable. The next line assigns a new value to the existing variable, so the type is not repeated.</p>
+<h3>Type inference with var</h3>
+<pre><code>var patientName = "Ahmad";       // string
+var patientAge = 35;             // int
+var consultationFee = 1500.50m;  // decimal</code></pre>
+<p><code>var</code> asks the compiler to infer the type from the initial value. It does not turn C# into a dynamically typed language: the variable still has a definite type. Use it when the type is obvious; explicit types can make business meaning clearer.</p></section>
+<section><h2>6. Constants: values that should not change</h2>
+<pre><code>const decimal RegistrationFee = 500m;</code></pre>
+<p>A constant must be assigned when declared and cannot be changed later. This is useful for genuine fixed values. If hospital administrators need to update a fee, that value should eventually come from application configuration or a database—not be hard-coded as a constant.</p></section>
+<section><h2>7. Value types and reference types</h2>
+<p>C# types are broadly classified as value types and reference types. A value-type assignment copies the value:</p>
+<pre><code>int age1 = 35;
+int age2 = age1;
+age2 = 40;
+
+Console.WriteLine(age1); // 35
+Console.WriteLine(age2); // 40</code></pre>
+<p>For a reference type, assignment copies the reference. Both variables can then refer to the same object:</p>
+<pre><code>Patient patient1 = new Patient();
+patient1.Name = "Ahmad";
+
+Patient patient2 = patient1;
+patient2.Name = "Bilal";
+
+Console.WriteLine(patient1.Name); // Bilal
+
+class Patient
+{
+    public string Name { get; set; } = "";
+}</code></pre>
+<p>Both variables refer to the same Patient object, so changing its Name through patient2 is visible through patient1. This is a conceptual model; the JIT compiler can optimize physical storage. Local variables are not guaranteed to occupy a particular memory region.</p>
+<p>Common value types include int, decimal, bool, and char. Common reference types include string, arrays, classes, and objects.</p>
+<p>This distinction becomes important when we study classes, collections, and Entity Framework Core.</p></section>
+<section><h2>8. Type conversion and input validation</h2>
+<p>Sometimes a value arrives as text but must be used as a number:</p>
+<pre><code>string ageInput = "35";
+int age = int.Parse(ageInput);
+Console.WriteLine(age + 5); // 40</code></pre>
+<p><code>int.Parse()</code> throws an exception if the text is not a valid integer. For user input, <code>TryParse()</code> is safer:</p>
+<pre><code>Console.Write("Enter patient age: ");
+
+string? input = Console.ReadLine();
+
+if (int.TryParse(input, out int age))
+{
+    Console.WriteLine($"Patient age: {age}");
+}
+else
+{
+    Console.WriteLine("Invalid age. Enter a whole number.");
+}</code></pre>
+<p><code>TryParse()</code> returns true when conversion succeeds and false when it fails. The converted value is supplied through the <code>out</code> variable named age.</p></section>
+<section><h2>9. Nullable values</h2>
+<pre><code>string? input = Console.ReadLine();</code></pre>
+<p>The question mark means the variable is allowed to contain <code>null</code>, meaning no value/object is present. For example, a user may submit an empty input. Our project has nullable reference types enabled with <code>&lt;Nullable&gt;enable&lt;/Nullable&gt;</code> in its project file. This helps the compiler warn when code may use a missing value.</p></section>
+<section><h2>10. Practical assignment</h2>
+<p>Create a patient registration summary containing:</p><ol><li>Patient name</li><li>Patient age</li><li>Patient phone number</li><li>Patient registration number</li><li>Consultation fee</li><li>Admission status</li><li>Blood group</li></ol>
+<p>Then complete these challenges:</p><ul><li>Change the patient's age and display the updated value.</li><li>Add a registration fee to the consultation fee and display the total bill.</li><li>Ask the user for their age and validate it with <code>int.TryParse()</code>.</li><li>Try assigning text to an integer variable. Read the compiler error and understand why C# rejects it.</li></ul>
+<div class="note"><strong>Checkpoint:</strong> Before moving on, explain why a phone number should be a string, why decimal is useful for money, and what happens when two variables refer to the same object.</div></section>
+<section><h2>Lesson summary</h2><ul><li>Variables give names to values that a program needs to store and reuse.</li><li>Choose data types according to the meaning of the data.</li><li>Use decimal for many financial calculations and string for identifiers such as phone numbers.</li><li>Value-type assignment copies a value; reference-type assignment copies a reference.</li><li>Use TryParse to validate user input without relying on exceptions for normal invalid input.</li><li>Nullable annotations help identify code paths where values may be missing.</li></ul>
+<p><strong>Next lesson:</strong> Operators and expressions—calculating hospital bills, discounts, balances, and patient ages.</p></section>
+<footer>HospitalApp · C# 7-Day Bootcamp · Lesson 03</footer>
+</main></body></html>
